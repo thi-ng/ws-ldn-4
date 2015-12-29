@@ -11,10 +11,10 @@ void SysTick_Handler(void) {
 }
 
 /******************************************************************************/
-/*                 STM32F4xx Peripherals Interrupt Handlers                   */
+/*                 STM32F7xx Peripherals Interrupt Handlers                   */
 /*  Add here the Interrupt Handler for the used peripheral(s) (PPP), for the  */
 /*  available peripheral interrupt handler's name please refer to the startup */
-/*  file (startup_stm32f4xx.s).                                               */
+/*  file (startup_stm32f7xx.S).                                               */
 /******************************************************************************/
 
 /**

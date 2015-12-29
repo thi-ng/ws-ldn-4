@@ -1,10 +1,10 @@
 #include "ex02/main.h"
-#include "ex02/stm32f4xx_it.h"
+#include "ex02/stm32f7xx_it.h"
 
 extern TIM_HandleTypeDef TimHandle;
 
 void Error_Handler(void) {
-	BSP_LED_On(LED_RED);
+	BSP_LED_On(LED_GREEN);
 	while (1) {
 	}
 }
@@ -15,22 +15,22 @@ void SysTick_Handler(void) {
 }
 
 /******************************************************************************/
-/*                 STM32F4xx Peripherals Interrupt Handlers                   */
+/*                 STM32F7xx Peripherals Interrupt Handlers                   */
 /*  Add here the Interrupt Handler for the used peripheral(s) (PPP), for the  */
 /*  available peripheral interrupt handler's name please refer to the startup */
-/*  file (startup_stm32f4xx.s).                                               */
+/*  file (startup_stm32f7xx.S).                                               */
 /******************************************************************************/
 
 /**
  * @brief  This function handles External line 0 interrupt request.
  */
-void EXTI0_IRQHandler(void) {
+void EXTI15_10_IRQHandler(void) {
 	HAL_GPIO_EXTI_IRQHandler(KEY_BUTTON_PIN);
 }
 
 /**
  * @brief  This function handles TIM interrupt request.
  */
-void TIM5_IRQHandler(void) {
+void TIMx_IRQHandler(void) {
 	HAL_TIM_IRQHandler(&TimHandle);
 }

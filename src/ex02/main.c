@@ -1,9 +1,14 @@
 #include "ex02/main.h"
 
+extern void Error_Handler(void);
+
+static void CPU_CACHE_Enable(void);
+
 TIM_HandleTypeDef TimHandle;
 uint32_t isSuspended = 0;
 
 int main(void) {
+	CPU_CACHE_Enable();
 	/* This sample code shows how to configure The HAL time base source base with a
 	 dedicated  Tick interrupt priority.
 	 A general purpose timer(TIM5) is used instead of Systick as source of time base.
@@ -13,15 +18,12 @@ int main(void) {
 	HAL_Init();
 
 	SystemClock_Config();
-	led_all_init();
+	BSP_LED_Init(LED_GREEN);
 	BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_EXTI);
 
 	while (1) {
-		HAL_Delay(1000);
-		BSP_LED_Toggle(LED_ORANGE);
-		BSP_LED_Toggle(LED_RED);
 		BSP_LED_Toggle(LED_GREEN);
-		BSP_LED_Toggle(LED_BLUE);
+		HAL_Delay(1000);
 	}
 }
 
@@ -36,38 +38,32 @@ int main(void) {
  */
 HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority) {
 	RCC_ClkInitTypeDef sClokConfig;
-	uint32_t uwTimclock, uwAPB1Prescaler = 0;
-	uint32_t uwPrescalerValue = 0;
+	uint32_t uwTimclock;
+	uint32_t uwPrescalerValue;
 	uint32_t pFLatency;
 
-	/* Configure the TIM5 IRQ priority */
-	HAL_NVIC_SetPriority(TIM5_IRQn, TickPriority, 0);
+	/* Configure the timer IRQ priority */
+	HAL_NVIC_SetPriority(TIMx_IRQn, TickPriority, 0);
 
 	/* Get clock configuration */
 	HAL_RCC_GetClockConfig(&sClokConfig, &pFLatency);
 
-	/* Get APB1 prescaler */
-	uwAPB1Prescaler = sClokConfig.APB1CLKDivider;
-
-	/* Compute TIM5 clock */
-	if (uwAPB1Prescaler == 0) {
-		uwTimclock = HAL_RCC_GetPCLK1Freq();
-	} else {
+	/* Compute timer clock */
+	uwTimclock = HAL_RCC_GetPCLK1Freq();
+	if (sClokConfig.APB1CLKDivider != 0) {
 		uwTimclock = 2 * HAL_RCC_GetPCLK1Freq();
 	}
 
-	/* Compute the prescaler value to have TIM5 counter clock equal to 1MHz */
+	/* Compute the prescaler value to have TIMx counter clock equal to 1MHz */
 	uwPrescalerValue = (uint32_t) ((uwTimclock / 1000000) - 1);
 
-	/* Initialize TIM5 */
-	TimHandle.Instance = TIM5;
-
 	/* Initialize TIMx peripheral as follow:
-	 + Period = [(TIM5CLK/1000) - 1]. to have a (1/1000) s time base.
+	 + Period = [(TIMxCLK/1000) - 1]. to have a (1/1000) s time base.
 	 + Prescaler = (uwTimclock/1000000 - 1) to have a 1MHz counter clock.
 	 + ClockDivision = 0
 	 + Counter direction = Up
 	 */
+	TimHandle.Instance = TIMx;
 	TimHandle.Init.Period = (1000000 / 1000) - 1;
 	TimHandle.Init.Prescaler = uwPrescalerValue;
 	TimHandle.Init.ClockDivision = 0;
@@ -117,4 +113,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 			isSuspended = 0;
 		}
 	}
+}
+
+static void CPU_CACHE_Enable(void) {
+	SCB_EnableICache();
+	SCB_EnableDCache();
 }
