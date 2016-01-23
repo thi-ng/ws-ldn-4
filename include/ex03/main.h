@@ -21,19 +21,20 @@ typedef struct Button Button;
 typedef void (*ButtonHandler)(Button *button, TS_StateTypeDef *touchState);
 typedef void (*ButtonRenderer)(Button *button);
 
-typedef enum {
-	BS_OFF = 0,
-	BS_HOVER_TO_ON,
-	BS_ON,
-	BS_HOVER_TO_OFF
-} ButtonState;
+enum {
+	BS_OFF = 1,
+	BS_ON = 2,
+	BS_HOVER = 4,
+	BS_DIRTY = 8,
+	BS_ONOFF_MASK = BS_ON | BS_OFF
+};
 
 struct Button {
 	uint16_t x;
 	uint16_t y;
 	uint16_t width;
 	uint16_t height;
-	ButtonState state;
+	uint16_t state;
 	ButtonHandler handler;
 	ButtonRenderer render;
 };
