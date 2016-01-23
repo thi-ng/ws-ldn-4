@@ -15,6 +15,12 @@ static TS_StateTypeDef touchState;
 
 __IO uint32_t isPressed = 0;
 
+static void handleButton(Button *bt, TS_StateTypeDef *touchState);
+static void renderButton(Button *bt);
+
+static Button bt = { .x = 10, .y = 10, .width = 100, .height = 32, .state =
+		BS_OFF, .handler = handleButton, .render = renderButton };
+
 int main() {
 	CPU_CACHE_Enable();
 	HAL_Init();
@@ -34,18 +40,19 @@ int main() {
 			while (!isPressed) {
 				BSP_TS_GetState(&touchState);
 				if (touchState.touchDetected) {
-					do {
-						BSP_TS_GetState(&touchState);
-						HAL_Delay(10);
-					} while (touchState.touchDetected);
+//					do {
+//						BSP_TS_GetState(&touchState);
+//						HAL_Delay(10);
+//					} while (touchState.touchDetected);
 					break;
 				}
-				HAL_Delay(10);
+				//HAL_Delay(10);
 			}
 		}
 	} else {
 		touchScreenError();
 	}
+	return 0;
 }
 
 static void demoWelcome() {
@@ -58,6 +65,13 @@ static void demoWelcome() {
 	BSP_LCD_SetTextColor(LCD_COLOR_DARKBLUE);
 	BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize() / 2 + 6,
 			(uint8_t *) "Welcome!", CENTER_MODE);
+	// Cupertino stylee
+	while (1) {
+		BSP_TS_GetState(&touchState);
+		bt.handler(&bt, &touchState);
+		bt.render(&bt);
+		HAL_Delay(10);
+	}
 }
 
 static void demoGraph() {
@@ -75,18 +89,62 @@ static void demoGraph() {
 }
 
 static void demoScribble() {
-	uint32_t cols[] = { LCD_COLOR_RED, LCD_COLOR_GREEN, LCD_COLOR_BLUE, LCD_COLOR_YELLOW, LCD_COLOR_MAGENTA };
+	static uint32_t cols[] = { LCD_COLOR_RED, LCD_COLOR_GREEN, LCD_COLOR_BLUE,
+	LCD_COLOR_YELLOW, LCD_COLOR_MAGENTA };
+	uint16_t width = BSP_LCD_GetXSize();
+	uint16_t height = BSP_LCD_GetYSize();
 	BSP_LCD_Clear(LCD_COLOR_WHITE);
 	while (!isPressed) {
 		BSP_TS_GetState(&touchState);
 		if (touchState.touchDetected) {
-			for (uint8_t i = 0; i < touchState.touchDetected; i++) {
+			for (uint8_t i = 0; i < MIN(touchState.touchDetected, 5); i++) {
 				BSP_LCD_SetTextColor(cols[i]);
-				BSP_LCD_FillCircle(touchState.touchX[i], touchState.touchY[i], 5);
+				BSP_LCD_FillCircle(CLAMP(touchState.touchX[i], 6, width - 6),
+						CLAMP(touchState.touchY[i], 6, height - 6), 5);
 			}
 		}
 		HAL_Delay(10);
 	}
+}
+
+static void handleButton(Button *bt, TS_StateTypeDef *touch) {
+	if (touch->touchDetected) {
+		// touch detected...
+		uint16_t x = touch->touchX[0];
+		uint16_t y = touch->touchY[0];
+		if (x >= bt->x && x < bt->x + bt->width && y >= bt->y
+				&& y < bt->y + bt->height) {
+			switch (bt->state) {
+			case BS_OFF:
+				bt->state = BS_HOVER_TO_ON;
+				break;
+			case BS_ON:
+				bt->state = BS_HOVER_TO_OFF;
+				break;
+			default:
+				break;
+			}
+		}
+	} else {
+		switch (bt->state) {
+		case BS_HOVER_TO_ON:
+			bt->state = BS_ON;
+			break;
+		case BS_HOVER_TO_OFF:
+			bt->state = BS_OFF;
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+static uint32_t buttonColors[] = { 0xff000000, 0xffcccccc, 0xffcc0000,
+		0xffcccccc };
+
+static void renderButton(Button *bt) {
+	BSP_LCD_SetTextColor(buttonColors[bt->state]);
+	BSP_LCD_FillRect(bt->x, bt->y, bt->width, bt->height);
 }
 
 static void touchScreenError() {
