@@ -116,7 +116,7 @@
 /** @defgroup STM32746G_DISCOVERY_LCD_Private_Variables STM32746G_DISCOVERY_LCD Private Variables
   * @{
   */ 
-static LTDC_HandleTypeDef  hLtdcHandler;
+LTDC_HandleTypeDef  hLtdcHandler;
 static DMA2D_HandleTypeDef hDma2dHandler;
 
 /* Default LCD configuration with LCD Layer 1 */
@@ -132,7 +132,7 @@ static LCD_DrawPropTypeDef DrawProp[MAX_LAYER_NUMBER];
 static void DrawChar(uint16_t Xpos, uint16_t Ypos, const uint8_t *c);
 static void FillTriangle(uint16_t x1, uint16_t x2, uint16_t x3, uint16_t y1, uint16_t y2, uint16_t y3);
 static void LL_FillBuffer(uint32_t LayerIndex, void *pDst, uint32_t xSize, uint32_t ySize, uint32_t OffLine, uint32_t ColorIndex);
-static void LL_ConvertLineToARGB8888(void * pSrc, void *pDst, uint32_t xSize, uint32_t ColorMode);
+void LL_ConvertLineToARGB8888(void * pSrc, void *pDst, uint32_t xSize, uint32_t ColorMode);
 /**
   * @}
   */ 
@@ -1503,7 +1503,7 @@ static void LL_FillBuffer(uint32_t LayerIndex, void *pDst, uint32_t xSize, uint3
   * @param  ColorMode: Input color mode   
   * @retval None
   */
-static void LL_ConvertLineToARGB8888(void *pSrc, void *pDst, uint32_t xSize, uint32_t ColorMode)
+void LL_ConvertLineToARGB8888(void *pSrc, void *pDst, uint32_t xSize, uint32_t ColorMode)
 {    
   /* Configure the DMA2D Mode, Color Mode and output offset */
   hDma2dHandler.Init.Mode         = DMA2D_M2M_PFC;

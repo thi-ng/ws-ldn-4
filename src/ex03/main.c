@@ -1,7 +1,12 @@
 #include <math.h>
 #include "ex03/main.h"
+#include "ex03/buttons.h"
 
 #define NUM_DEMOS 3
+
+extern LTDC_HandleTypeDef hLtdcHandler;
+extern void LL_ConvertLineToARGB8888(void * pSrc, void *pDst, uint32_t xSize,
+		uint32_t ColorMode);
 
 static void demoWelcome();
 static void demoGraph();
@@ -18,7 +23,10 @@ __IO uint32_t isPressed = 0;
 static void handleButton(Button *bt, TS_StateTypeDef *touchState);
 static void renderButton(Button *bt);
 
-static Button bt = { .x = 10, .y = 10, .width = 100, .height = 32, .state =
+static void customDrawBitmap(uint32_t x, uint32_t y, uint32_t width,
+		uint32_t height, uint8_t *pbmp);
+
+static Button bt = { .x = 10, .y = 10, .width = 100, .height = 64, .state =
 		BS_OFF, .handler = handleButton, .render = renderButton };
 
 int main() {
@@ -40,13 +48,13 @@ int main() {
 			while (!isPressed) {
 				BSP_TS_GetState(&touchState);
 				if (touchState.touchDetected) {
-//					do {
-//						BSP_TS_GetState(&touchState);
-//						HAL_Delay(10);
-//					} while (touchState.touchDetected);
+					do {
+						BSP_TS_GetState(&touchState);
+						HAL_Delay(10);
+					} while (touchState.touchDetected);
 					break;
 				}
-				//HAL_Delay(10);
+				HAL_Delay(10);
 			}
 		}
 	} else {
@@ -66,11 +74,11 @@ static void demoWelcome() {
 	BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize() / 2 + 6,
 			(uint8_t *) "Welcome!", CENTER_MODE);
 	// Cupertino stylee
-	while (1) {
+	while (!isPressed) {
 		BSP_TS_GetState(&touchState);
 		bt.handler(&bt, &touchState);
 		bt.render(&bt);
-		HAL_Delay(10);
+		HAL_Delay(30);
 	}
 }
 
@@ -145,6 +153,7 @@ static uint32_t buttonColors[] = { 0xff000000, 0xffcccccc, 0xffcc0000,
 static void renderButton(Button *bt) {
 	BSP_LCD_SetTextColor(buttonColors[bt->state]);
 	BSP_LCD_FillRect(bt->x, bt->y, bt->width, bt->height);
+	customDrawBitmap(bt->x, bt->y, 64, 64, i_am_robot);
 }
 
 static void touchScreenError() {
@@ -163,5 +172,18 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 		while (BSP_PB_GetState(BUTTON_KEY) != RESET) {
 		}
 		isPressed = 1;
+	}
+}
+
+static void customDrawBitmap(uint32_t x, uint32_t y, uint32_t width,
+		uint32_t height, uint8_t *pbmp) {
+	uint32_t lcdWidth = BSP_LCD_GetXSize();
+	uint32_t address = hLtdcHandler.LayerCfg[LTDC_ACTIVE_LAYER].FBStartAdress
+			+ (((lcdWidth * y) + x) << 2);
+	while (--height) {
+		LL_ConvertLineToARGB8888((uint32_t *) pbmp, (uint32_t *) address, width,
+				CM_ARGB8888);
+		address += lcdWidth << 2;
+		pbmp += width << 2;
 	}
 }
