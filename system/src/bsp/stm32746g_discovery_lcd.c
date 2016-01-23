@@ -70,12 +70,12 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32746g_discovery_lcd.h"
-#include "../../../Utilities/Fonts/fonts.h"
-#include "../../../Utilities/Fonts/font24.c"
-#include "../../../Utilities/Fonts/font20.c"
-#include "../../../Utilities/Fonts/font16.c"
-#include "../../../Utilities/Fonts/font12.c"
-#include "../../../Utilities/Fonts/font8.c"
+#include "fonts.h"
+//#include "font24.c"
+//#include "font20.c"
+//#include "font16.c"
+//#include "font12.c"
+//#include "font8.c"
 
 /** @addtogroup BSP
   * @{

@@ -53,7 +53,7 @@
 #include "stm32746g_discovery_sdram.h"
  
 #include "stm32746g_discovery.h"
-#include "../../../Utilities/Fonts/fonts.h"
+#include "fonts.h"
   
 /** @addtogroup BSP
   * @{
