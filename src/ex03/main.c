@@ -75,9 +75,9 @@ static void demoGraph() {
 }
 
 static void demoScribble() {
-	uint32_t cols[] = { LCD_COLOR_RED, LCD_COLOR_GREEN };
+	uint32_t cols[] = { LCD_COLOR_RED, LCD_COLOR_GREEN, LCD_COLOR_BLUE, LCD_COLOR_YELLOW, LCD_COLOR_MAGENTA };
 	BSP_LCD_Clear(LCD_COLOR_WHITE);
-	while (1) {
+	while (!isPressed) {
 		BSP_TS_GetState(&touchState);
 		if (touchState.touchDetected) {
 			for (uint8_t i = 0; i < touchState.touchDetected; i++) {
