@@ -1,8 +1,6 @@
-#ifndef __CLOCKCONFIG_H
-#define __CLOCKCONFIG_H
+#pragma once
 
 #include "stm32f7xx_hal.h"
 
 void SystemClock_Config(void);
-
-#endif
+void CPU_CACHE_Enable(void);

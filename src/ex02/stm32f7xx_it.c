@@ -10,8 +10,7 @@ void Error_Handler(void) {
 }
 
 void SysTick_Handler(void) {
-	// DON'T DO ANYTHING HERE!
-	// usually this handler calls HAL_IncTick()
+	HAL_IncTick();
 }
 
 /******************************************************************************/
@@ -21,16 +20,12 @@ void SysTick_Handler(void) {
 /*  file (startup_stm32f7xx.S).                                               */
 /******************************************************************************/
 
-/**
- * @brief  This function handles External line 0 interrupt request.
- */
+// External line 0 interrupt request.
 void EXTI15_10_IRQHandler(void) {
 	HAL_GPIO_EXTI_IRQHandler(KEY_BUTTON_PIN);
 }
 
-/**
- * @brief  This function handles TIM interrupt request.
- */
+// Timer interrupt request.
 void TIMx_IRQHandler(void) {
 	HAL_TIM_IRQHandler(&TimHandle);
 }

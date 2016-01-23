@@ -39,7 +39,6 @@ void SystemClock_Config(void) {
 	ret = HAL_RCC_OscConfig(&RCC_OscInitStruct);
 	if (ret != HAL_OK) {
 		while (1) {
-			;
 		}
 	}
 
@@ -47,7 +46,6 @@ void SystemClock_Config(void) {
 	ret = HAL_PWREx_EnableOverDrive();
 	if (ret != HAL_OK) {
 		while (1) {
-			;
 		}
 	}
 
@@ -60,7 +58,6 @@ void SystemClock_Config(void) {
 	ret = HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct);
 	if (ret != HAL_OK) {
 		while (1) {
-			;
 		}
 	}
 
@@ -75,7 +72,12 @@ void SystemClock_Config(void) {
 	ret = HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7);
 	if (ret != HAL_OK) {
 		while (1) {
-			;
 		}
 	}
+}
+
+// Enable instruction & data caches
+void CPU_CACHE_Enable(void) {
+	SCB_EnableICache();
+	SCB_EnableDCache();
 }

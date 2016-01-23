@@ -8,9 +8,3 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim) {
 	// Enable the TIMx global Interrupt
 	HAL_NVIC_EnableIRQ(TIMx_IRQn);
 }
-
-void HAL_MspInit(void) {
-}
-
-void HAL_MspDeInit(void) {
-}

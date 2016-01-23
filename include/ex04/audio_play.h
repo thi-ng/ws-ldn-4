@@ -1,8 +1,4 @@
-#ifndef __EX04_AUDIO_PLAY_H
-#define __EX04_AUDIO_PLAY_H
-
+#pragma once
 #include "ex04/main.h"
 
 void demoAudioPlayback(void);
-
-#endif

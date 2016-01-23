@@ -1,5 +1,4 @@
-#ifndef __EX02_MAIN_H
-#define __EX02_MAIN_H
+#pragma once
 
 #include "stm32f7xx_hal.h"
 #include "stm32746g_discovery.h"
@@ -9,6 +8,4 @@
 #define TIMx_CLK_ENABLE() __HAL_RCC_TIM3_CLK_ENABLE()
 #define TIMx_IRQn         TIM3_IRQn
 #define TIMx_IRQHandler   TIM3_IRQHandler
-
-#endif
 
