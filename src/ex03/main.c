@@ -1,31 +1,34 @@
 #include <math.h>
 #include "ex03/main.h"
-#include "ex03/buttons.h"
+#include "gui/bt_blackangle64_16.h"
+#include "macros.h"
 
-#define NUM_DEMOS 3
+// demo module declarations
 
+#define NUM_DEMOS 4
+
+static void demoGUI();
 static void demoWelcome();
 static void demoGraph();
 static void demoScribble();
 
-DemoFn demos[] = { demoWelcome, demoGraph, demoScribble };
+static void touchScreenError();
+static void initGUI();
+
+DemoFn demos[] = { demoGUI, demoWelcome, demoGraph, demoScribble };
 uint32_t demoID = 0;
 
-static void touchScreenError();
 static TS_StateTypeDef touchState;
 __IO uint32_t isPressed = 0;
 
-static void handleButton(Button *bt, TS_StateTypeDef *touchState);
-static void renderBitmapButton(Button *bt);
-static void drawBitmapRaw(uint32_t x, uint32_t y, uint32_t width,
-		uint32_t height, uint8_t *pbmp);
+static SpriteSheet dialSheet = {
+		.pixels = bt_blackangle64_16,
+		.spriteWidth = 64,
+		.spriteHeight = 64,
+		.numSprites = 16
+};
 
-static Button bt = { .x = 10, .y = 10, .width = 100, .height = 64, .state =
-		BS_OFF | BS_DIRTY, .handler = handleButton, .render = renderBitmapButton };
-
-extern LTDC_HandleTypeDef hLtdcHandler;
-extern void LL_ConvertLineToARGB8888(void * pSrc, void *pDst, uint32_t xSize,
-		uint32_t ColorMode);
+static GUIElement *bt;
 
 int main() {
 	CPU_CACHE_Enable();
@@ -36,8 +39,9 @@ int main() {
 	BSP_LCD_Init();
 	if (BSP_TS_Init(BSP_LCD_GetXSize(), BSP_LCD_GetYSize()) == TS_OK) {
 		BSP_LCD_LayerDefaultInit(LTDC_ACTIVE_LAYER, LCD_FRAME_BUFFER);
-
 		BSP_LCD_SelectLayer(LTDC_ACTIVE_LAYER);
+
+		initGUI();
 
 		while (1) {
 			isPressed = 0;
@@ -61,26 +65,37 @@ int main() {
 	return 0;
 }
 
-static void demoWelcome() {
-	BSP_LCD_SetFont(&LCD_DEFAULT_FONT);
-	BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
-	BSP_LCD_Clear(LCD_COLOR_WHITE);
-	BSP_LCD_SetTextColor(LCD_COLOR_BLUE);
-	BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize() / 2 - 24,
-			(uint8_t *) "STM32F746G", CENTER_MODE);
-	BSP_LCD_SetTextColor(LCD_COLOR_DARKBLUE);
-	BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize() / 2 + 6,
-			(uint8_t *) "Welcome!", CENTER_MODE);
+static void initGUI() {
+	bt = guiDialButton(0, "Volume", 10, 10, 0.0f, 0.025f, &dialSheet);
+}
+
+static void demoGUI() {
+	BSP_LCD_SetFont(&UI_FONT);
+	BSP_LCD_SetBackColor(0);
+	BSP_LCD_Clear(UI_BG_COLOR);
+	BSP_LCD_SetTextColor(UI_TEXT_COLOR);
 
 	// force button redraw
-	bt.state |= BS_DIRTY;
+	bt->state |= GUI_DIRTY;
 
 	while (!isPressed) {
 		BSP_TS_GetState(&touchState);
-		bt.handler(&bt, &touchState);
-		bt.render(&bt);
+		bt->handler(bt, &touchState);
+		bt->render(bt);
 		HAL_Delay(10);
 	}
+}
+
+static void demoWelcome() {
+	BSP_LCD_SetFont(&UI_FONT);
+	BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
+	BSP_LCD_Clear(LCD_COLOR_WHITE);
+	BSP_LCD_SetTextColor(LCD_COLOR_BLUE);
+	BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize() / 2 - 8,
+			(uint8_t *) "STM32F746G", CENTER_MODE);
+	BSP_LCD_SetTextColor(LCD_COLOR_DARKBLUE);
+	BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize() / 2 + 8,
+			(uint8_t *) "Welcome!", CENTER_MODE);
 }
 
 static void demoGraph() {
@@ -116,50 +131,6 @@ static void demoScribble() {
 	}
 }
 
-static void handleButton(Button *bt, TS_StateTypeDef *touch) {
-	if (touch->touchDetected) {
-		// touch detected...
-		uint16_t x = touch->touchX[0];
-		uint16_t y = touch->touchY[0];
-		if (x >= bt->x && x < bt->x + bt->width && y >= bt->y
-				&& y < bt->y + bt->height) {
-			switch (bt->state) {
-			case BS_OFF:
-				bt->state |= BS_HOVER | BS_DIRTY;
-				break;
-			case BS_ON:
-				bt->state |= BS_HOVER | BS_DIRTY;
-				break;
-			default:
-				break;
-			}
-		}
-	} else {
-		if (bt->state & BS_HOVER) {
-			// clear hover flag
-			bt->state &= ~((uint16_t) BS_HOVER);
-			// mark dirty (force redraw)
-			bt->state |= BS_DIRTY;
-			// invert on/off bitmask
-			bt->state ^= BS_ONOFF_MASK;
-		}
-	}
-}
-
-static uint32_t buttonColors[] = { 0xff000000, 0xffffff00 };
-
-static void renderBitmapButton(Button *bt) {
-	if (bt->state & BS_DIRTY) {
-		BSP_LCD_SetTextColor(
-				bt->state & BS_HOVER ?
-						0xffff00ff : buttonColors[(bt->state & BS_ONOFF_MASK) - 1]);
-		BSP_LCD_FillRect(bt->x, bt->y, bt->width, bt->height);
-		drawBitmapRaw(bt->x, bt->y, 64, 64, i_am_robot);
-		// clear dirty flag
-		bt->state &= ~((uint16_t) BS_DIRTY);
-	}
-}
-
 static void touchScreenError() {
 	BSP_LCD_SetFont(&LCD_DEFAULT_FONT);
 	BSP_LCD_SetBackColor(LCD_COLOR_RED);
@@ -176,18 +147,5 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 		while (BSP_PB_GetState(BUTTON_KEY) != RESET) {
 		}
 		isPressed = 1;
-	}
-}
-
-static void drawBitmapRaw(uint32_t x, uint32_t y, uint32_t width,
-		uint32_t height, uint8_t *pbmp) {
-	uint32_t lcdWidth = BSP_LCD_GetXSize();
-	uint32_t address = hLtdcHandler.LayerCfg[LTDC_ACTIVE_LAYER].FBStartAdress
-			+ (((lcdWidth * y) + x) << 2);
-	while (--height) {
-		LL_ConvertLineToARGB8888((uint32_t *) pbmp, (uint32_t *) address, width,
-		CM_ARGB8888);
-		address += lcdWidth << 2;
-		pbmp += width << 2;
 	}
 }
