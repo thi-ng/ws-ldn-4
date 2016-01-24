@@ -9,6 +9,7 @@
 #include "synth/panning.h"
 #include "synth/osc.h"
 #include "synth/node_ops.h"
+#include "macros.h"
 
 #define VOLUME 50
 // 256 sample
@@ -29,9 +30,17 @@ static void initSynth();
 static void demoGraph();
 static void updateAudioBuffer();
 
+typedef struct {
+	float freq;
+	float phase;
+	float amp;
+} Osc;
+
+static Osc osc = { .freq = HZ_TO_RAD(110.0f), .phase = 0.0f, .amp = 1.0f };
+
 void demoAudioPlayback(void) {
 	BSP_LED_On(LED_GREEN);
-	memset(audioBuf, 0, AUDIO_DMA_BUFFER_SIZE);
+	memset(audioBuf, 0, AUDIO_DMA_BUFFER_SIZE * 2);
 	if (BSP_AUDIO_OUT_Init(OUTPUT_DEVICE_HEADPHONE, VOLUME, SAMPLE_RATE) != 0) {
 		Error_Handler();
 	}
@@ -51,14 +60,13 @@ void demoAudioPlayback(void) {
 }
 
 static void demoGraph() {
-	//BSP_LCD_Clear(LCD_COLOR_BLACK);
-	uint16_t w = BSP_LCD_GetXSize();
-	uint16_t h = BSP_LCD_GetYSize() / 2;
+	BSP_LCD_Clear(LCD_COLOR_BLACK);
+	uint16_t h = BSP_LCD_GetYSize();
 	for (uint16_t i = 0, x=0; i < AUDIO_DMA_BUFFER_SIZE; i+=2, x++) {
-		int16_t y = 68 + (audioBuf[i] >> 9);
+		int16_t y = CLAMP(68 + (audioBuf[i] >> 9), 0, 135);
 		BSP_LCD_DrawPixel(x, y, LCD_COLOR_CYAN);
 		y = h - 68 + (audioBuf[i+1] >> 9);
-		BSP_LCD_DrawPixel(x, y, LCD_COLOR_MAGENTA);
+		BSP_LCD_DrawPixel(x, CLAMP(y, h/2, h-1), LCD_COLOR_MAGENTA);
 	}
 }
 
@@ -87,16 +95,35 @@ static void initSynth() {
 	ct_synth_build_stack(&synth.stacks[0], nodes, 2);
 }
 
+static void updateOscillator(int16_t *ptr) {
+	for (uint16_t i = 0; i < AUDIO_DMA_BUFFER_SIZE2; i++) {
+		float y = sinf(osc.phase) * osc.amp;
+		osc.phase += osc.freq;
+		if (osc.phase >= M_TWOPI) {
+			osc.phase -= M_TWOPI;
+		}
+		int16_t yint = (int16_t) (y * 32767.0f);
+		*ptr++ = yint;
+		//*ptr++ = yint;
+		osc.amp *= 0.99995;
+	}
+	if (osc.amp < 0.01f) {
+		osc.amp = 1.0f;
+		osc.freq = HZ_TO_RAD(HAL_GetTick() % 1000);
+	}
+}
+
 static void updateAudioBuffer() {
 	if (bufferState == BUFFER_OFFSET_HALF) {
 		int16_t *ptr = (int16_t*) audioBuf;
-		ct_synth_update_mix_stereo_i16(&synth, AUDIO_DMA_BUFFER_SIZE2, ptr);
+		//ct_synth_update_mix_stereo_i16(&synth, AUDIO_DMA_BUFFER_SIZE2, ptr);
+		updateOscillator(ptr);
 		bufferState = BUFFER_OFFSET_NONE;
 	}
-
 	if (bufferState == BUFFER_OFFSET_FULL) {
 		int16_t *ptr = (int16_t*) &audioBuf[AUDIO_DMA_BUFFER_SIZE2];
-		ct_synth_update_mix_stereo_i16(&synth, AUDIO_DMA_BUFFER_SIZE2, ptr);
+		//ct_synth_update_mix_stereo_i16(&synth, AUDIO_DMA_BUFFER_SIZE2, ptr);
+		updateOscillator(ptr);
 		bufferState = BUFFER_OFFSET_NONE;
 	}
 }
@@ -107,7 +134,7 @@ void BSP_AUDIO_OUT_HalfTransfer_CallBack(void) {
 
 void BSP_AUDIO_OUT_TransferComplete_CallBack(void) {
 	bufferState = BUFFER_OFFSET_FULL;
-	BSP_AUDIO_OUT_ChangeBuffer((uint16_t*) &audioBuf,
+	BSP_AUDIO_OUT_ChangeBuffer((uint16_t*) audioBuf,
 	AUDIO_DMA_BUFFER_SIZE * 2);
 }
 
