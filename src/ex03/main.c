@@ -1,6 +1,7 @@
 #include <math.h>
 #include "ex03/main.h"
 #include "gui/bt_blackangle64_16.h"
+#include "gui/bt_solo32.h"
 #include "macros.h"
 
 // demo module declarations
@@ -13,7 +14,7 @@ static void demoGraph();
 static void demoScribble();
 
 static void touchScreenError();
-static void initGUI();
+static void initAppGUI();
 
 DemoFn demos[] = { demoGUI, demoWelcome, demoGraph, demoScribble };
 uint32_t demoID = 0;
@@ -21,14 +22,13 @@ uint32_t demoID = 0;
 static TS_StateTypeDef touchState;
 __IO uint32_t isPressed = 0;
 
-static SpriteSheet dialSheet = {
-		.pixels = bt_blackangle64_16,
-		.spriteWidth = 64,
-		.spriteHeight = 64,
-		.numSprites = 16
-};
+static SpriteSheet dialSheet = { .pixels = bt_blackangle64_16,
+		.spriteWidth = 64, .spriteHeight = 64, .numSprites = 16 };
 
-static GUIElement *bt;
+static SpriteSheet soloSheet = { .pixels = bt_solo32, .spriteWidth = 32,
+		.spriteHeight = 32, .numSprites = 2 };
+
+static GUI *gui;
 
 int main() {
 	CPU_CACHE_Enable();
@@ -41,7 +41,7 @@ int main() {
 		BSP_LCD_LayerDefaultInit(LTDC_ACTIVE_LAYER, LCD_FRAME_BUFFER);
 		BSP_LCD_SelectLayer(LTDC_ACTIVE_LAYER);
 
-		initGUI();
+		initAppGUI();
 
 		while (1) {
 			isPressed = 0;
@@ -65,8 +65,13 @@ int main() {
 	return 0;
 }
 
-static void initGUI() {
-	bt = guiDialButton(0, "Volume", 10, 10, 0.0f, 0.025f, &dialSheet);
+static void initAppGUI() {
+	gui = initGUI(2);
+	gui->items[0] = guiDialButton(0, "Volume", 10, 10, 0.0f, 0.025f, &dialSheet,
+	NULL);
+	gui->items[1] = guiDialButton(1, "Freq", 80, 10, 0.0f, 0.025f, &dialSheet,
+	NULL);
+	//gui->items[1] = guiPushButton(1, "Test", 10, 100, 1.0f, &soloSheet, NULL);
 }
 
 static void demoGUI() {
@@ -75,13 +80,11 @@ static void demoGUI() {
 	BSP_LCD_Clear(UI_BG_COLOR);
 	BSP_LCD_SetTextColor(UI_TEXT_COLOR);
 
-	// force button redraw
-	bt->state |= GUI_DIRTY;
+	guiForceRedraw(gui);
 
 	while (!isPressed) {
 		BSP_TS_GetState(&touchState);
-		bt->handler(bt, &touchState);
-		bt->render(bt);
+		guiUpdate(gui, &touchState);
 		HAL_Delay(10);
 	}
 }

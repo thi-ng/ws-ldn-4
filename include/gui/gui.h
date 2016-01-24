@@ -10,6 +10,7 @@ typedef struct GUIElement GUIElement;
 typedef void (*GUIElementHandler)(GUIElement *button,
 		TS_StateTypeDef *touchState);
 typedef void (*GUIElementRenderer)(GUIElement *button);
+typedef void (*GUICallback)(GUIElement *button);
 
 // element state flags
 enum {
@@ -38,6 +39,7 @@ struct GUIElement {
 	SpriteSheet *sprite;
 	GUIElementHandler handler;
 	GUIElementRenderer render;
+	GUICallback callback;
 	uint8_t id;
 };
 
@@ -50,7 +52,11 @@ typedef struct {
 } DialButtonState;
 
 typedef struct {
-	GUIElement *items;
+	float value;
+} PushButtonState;
+
+typedef struct {
+	GUIElement **items;
 	uint8_t numItems;
 	int8_t selected;
 } GUI;
@@ -65,5 +71,13 @@ void drawSprite(uint16_t x, uint16_t y, uint8_t id, SpriteSheet *sprite);
 void drawBitmapRaw(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
 		uint8_t *pixels);
 
-GUIElement *guiDialButton(uint8_t id, char *label, uint16_t x, uint16_t y, float val,
-		float sens, SpriteSheet *sprite);
+GUI *initGUI(uint8_t num);
+void guiForceRedraw(GUI *gui);
+void guiUpdate(GUI *gui, TS_StateTypeDef *touch);
+
+GUIElement *guiElementCommon(uint8_t id, char *label, uint16_t x, uint16_t y,
+		SpriteSheet *sprite, GUICallback cb);
+GUIElement *guiPushButton(uint8_t id, char *label, uint16_t x, uint16_t y,
+		float val, SpriteSheet *sprite, GUICallback cb);
+GUIElement *guiDialButton(uint8_t id, char *label, uint16_t x, uint16_t y,
+		float val, float sens, SpriteSheet *sprite, GUICallback cb);

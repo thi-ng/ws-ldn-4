@@ -6,13 +6,17 @@
 #include "gui/gui.h"
 #include "macros.h"
 
-static uint32_t guiButtonColors[] = { 0xff000000, 0xffffff00 };
+// private functions
+
+static void drawElementLabel(GUIElement *e);
 
 // externally defined structures & functions
 
 extern LTDC_HandleTypeDef hLtdcHandler;
 extern void LL_ConvertLineToARGB8888(void * pSrc, void *pDst, uint32_t xSize,
 		uint32_t ColorMode);
+
+// push button functions
 
 void handlePushButton(GUIElement *bt, TS_StateTypeDef *touch) {
 	if (touch->touchDetected) {
@@ -39,8 +43,25 @@ void handlePushButton(GUIElement *bt, TS_StateTypeDef *touch) {
 		bt->state |= GUI_DIRTY;
 		// invert on/off bitmask
 		bt->state ^= GUI_ONOFF_MASK;
+		if (bt->callback != NULL) {
+			bt->callback(bt);
+		}
 	}
 }
+
+void renderPushButton(GUIElement *bt) {
+	if (bt->state & GUI_DIRTY) {
+		SpriteSheet *sprite = bt->sprite;
+		uint8_t state = bt->state & GUI_ONOFF_MASK;
+		uint8_t id = state == GUI_ON ? 0 : 1;
+		drawSprite(bt->x, bt->y, id, sprite);
+		drawElementLabel(bt);
+		// clear dirty flag
+		bt->state &= ~((uint16_t) GUI_DIRTY);
+	}
+}
+
+// dial button functions
 
 void handleDialButton(GUIElement *bt, TS_StateTypeDef *touch) {
 	if (touch->touchDetected) {
@@ -49,9 +70,16 @@ void handleDialButton(GUIElement *bt, TS_StateTypeDef *touch) {
 		uint16_t y = touch->touchY[0];
 		DialButtonState *db = (DialButtonState *) bt->userData;
 		if (bt->state == GUI_HOVER) {
-			float newVal = db->startValue + db->sensitivity * (x - db->startX);
+			//int16_t dx = (x - db->startX);
+			//int16_t dy = (y - db->startY);
+			//int16_t delta = abs(dx) > abs(dy) ? dx : dy;
+			int16_t delta = (x - db->startX);
+			float newVal = db->startValue + db->sensitivity * delta;
 			db->value = CLAMP(newVal, 0.0f, 1.0f);
 			bt->state |= GUI_DIRTY;
+			if (bt->callback != NULL) {
+				bt->callback(bt);
+			}
 		} else if (x >= bt->x && x < bt->x + bt->width && y >= bt->y
 				&& y < bt->y + bt->height) {
 			bt->state = GUI_HOVER;
@@ -64,35 +92,25 @@ void handleDialButton(GUIElement *bt, TS_StateTypeDef *touch) {
 	}
 }
 
-void renderPushButton(GUIElement *bt) {
-	if (bt->state & GUI_DIRTY) {
-		SpriteSheet *sprite = bt->sprite;
-		BSP_LCD_SetTextColor(
-				bt->state & GUI_HOVER ?
-						0xffff00ff :
-						guiButtonColors[(bt->state & GUI_ONOFF_MASK) - 1]);
-		BSP_LCD_FillRect(bt->x, bt->y, bt->width, bt->height);
-		drawSprite(bt->x, bt->y, 0, sprite);
-		BSP_LCD_SetTextColor(UI_TEXT_COLOR);
-		BSP_LCD_DisplayStringAt(bt->x,
-				bt->y + sprite->spriteHeight + 4, (uint8_t*) bt->label,
-				LEFT_MODE);
-		// clear dirty flag
-		bt->state &= ~((uint16_t) GUI_DIRTY);
-	}
-}
-
 void renderDialButton(GUIElement *bt) {
 	if (bt->state & GUI_DIRTY) {
 		SpriteSheet *sprite = bt->sprite;
 		DialButtonState *db = (DialButtonState *) bt->userData;
 		uint8_t id = (uint8_t) (db->value * (float) (sprite->numSprites - 1));
 		drawSprite(bt->x, bt->y, id, sprite);
-		BSP_LCD_SetTextColor(UI_TEXT_COLOR);
-		BSP_LCD_DisplayStringAt(bt->x,
-				bt->y + sprite->spriteHeight + 4, (uint8_t*) bt->label,
-				LEFT_MODE);
+		drawElementLabel(bt);
 		bt->state &= ~((uint16_t) GUI_DIRTY);
+	}
+}
+
+// common functionality
+
+static void drawElementLabel(GUIElement *e) {
+	if (e->label != NULL) {
+		SpriteSheet *sprite = e->sprite;
+		BSP_LCD_SetTextColor(UI_TEXT_COLOR);
+		BSP_LCD_DisplayStringAt(e->x, e->y + sprite->spriteHeight + 4,
+				(uint8_t*) e->label, LEFT_MODE);
 	}
 }
 
@@ -131,11 +149,11 @@ void drawBitmapRaw(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
 	}
 }
 
-GUIElement *guiDialButton(uint8_t id, char *label, uint16_t x, uint16_t y,
-		float val, float sens, SpriteSheet *sprite) {
+// GUI element constructors
+
+GUIElement *guiElement(uint8_t id, char *label, uint16_t x, uint16_t y,
+		SpriteSheet *sprite, GUICallback cb) {
 	GUIElement *e = (GUIElement *) calloc(1, sizeof(GUIElement));
-	DialButtonState *db = (DialButtonState *) calloc(1,
-			sizeof(DialButtonState));
 	e->id = id;
 	e->x = x;
 	e->y = y;
@@ -143,13 +161,53 @@ GUIElement *guiDialButton(uint8_t id, char *label, uint16_t x, uint16_t y,
 	e->height = sprite->spriteHeight;
 	e->sprite = sprite;
 	e->label = label;
+	e->callback = cb;
 	e->state = GUI_OFF | GUI_DIRTY;
-	//e->handler = handlePushButton;
-	//e->render = renderPushButton;
+	return e;
+}
+
+GUIElement *guiDialButton(uint8_t id, char *label, uint16_t x, uint16_t y,
+		float val, float sens, SpriteSheet *sprite, GUICallback cb) {
+	GUIElement *e = guiElement(id, label, x, y, sprite, cb);
+	DialButtonState *db = (DialButtonState *) calloc(1,
+			sizeof(DialButtonState));
 	e->handler = handleDialButton;
 	e->render = renderDialButton;
 	e->userData = db;
 	db->value = val;
 	db->sensitivity = sens;
 	return e;
+}
+
+GUIElement *guiPushButton(uint8_t id, char *label, uint16_t x, uint16_t y,
+		float val, SpriteSheet *sprite, GUICallback cb) {
+	GUIElement *e = guiElement(id, label, x, y, sprite, cb);
+	PushButtonState *pb = (PushButtonState *) calloc(1,
+			sizeof(PushButtonState));
+	e->handler = handlePushButton;
+	e->render = renderPushButton;
+	e->userData = pb;
+	pb->value = val;
+	return e;
+}
+
+GUI *initGUI(uint8_t num) {
+	GUI *gui = (GUI *) calloc(1, sizeof(GUI));
+	gui->items = (GUIElement **) calloc(num, sizeof(GUIElement *));
+	gui->numItems = num;
+	return gui;
+}
+
+void guiForceRedraw(GUI *gui) {
+	for (uint8_t i = 0; i < gui->numItems; i++) {
+		gui->items[i]->state |= GUI_DIRTY;
+	}
+}
+
+void guiUpdate(GUI *gui, TS_StateTypeDef *touch) {
+	for (uint8_t i = 0; i < gui->numItems; i++) {
+		GUIElement *e = gui->items[i];
+		e->handler(e, touch);
+		e->render(e);
+	}
 }
