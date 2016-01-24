@@ -1,104 +1,72 @@
 #include "ex04/audio_play.h"
+#include <string.h>
+#include <math.h>
+
+#define VOLUME 70
+#define AUDIO_BUFFER_SIZE 512
+#define AUDIO_BUFFER_SIZE2 (AUDIO_BUFFER_SIZE / 2)
+#define AUDIO_BUFFER_SIZE4 (AUDIO_BUFFER_SIZE / 4)
+
+#define SAMPLE_RATE AUDIO_FREQUENCY_44K
+#define TAU_RATE (M_TWOPI / (float)SAMPLE_RATE)
+#define INV_TAU_RATE (1.0f / TAU_RATE)
+#define HZ_TO_RAD(freq) ((freq)*TAU_RATE)
+#define RAD_TO_HZ(freq) ((freq)*INV_TAU_RATE)
+
+extern __IO PlaybackState playbackState;
 
 typedef struct {
-	uint32_t riffTag;
-	uint32_t riffLength;
-	uint32_t waveTag;
-	uint32_t formatTag;
-	uint32_t formatLength;
-	uint16_t audioFormat;
-	uint16_t numChannels;
-	uint32_t sampleRate;
-	uint32_t byteRate;
-	uint16_t blockAlign;
-	uint16_t bits;
-	uint32_t dataTag;
-	uint32_t dataLength;
-} WavHeader;
+	float freq;
+	float phase;
+	float amp;
+} Osc;
 
-#define AUDIO_FILE_SIZE    0x20000
-#define AUDIO_FILE_ADDRESS 0x08020000
-#define VOLUME 70
+uint16_t audioBuf[AUDIO_BUFFER_SIZE];
+uint16_t *currentPos;
 
-extern __IO uint32_t isPressed;
-extern __IO PlaybackState playbackState;
-__IO uint32_t useRecordBuffer = 0;
-
-WavHeader *wav = NULL;
-
-uint32_t audioTotalSize = 0xffff; // total size of the audio file
-uint32_t audioRemSize = 0xffff; // remaining data in audio file
-uint16_t *currentPos; // current position of audio pointer
-
-extern uint16_t recordBuffer[RECORD_BUFFER_SIZE];
+Osc osc = { .freq = HZ_TO_RAD(440.0f), .phase = 0.0f, .amp = 1.0f };
 
 void demoAudioPlayback(void) {
-
-	if (BSP_ACCELERO_Init() != ACCELERO_OK) {
-		Error_Handler();
-	}
-
-	BSP_ACCELERO_Click_ITConfig();
-	BSP_LED_On(LED_BLUE);
 	BSP_LED_On(LED_GREEN);
-	wav = (WavHeader*) AUDIO_FILE_ADDRESS;
-
-	if (BSP_AUDIO_OUT_Init(OUTPUT_DEVICE_AUTO, VOLUME, wav->sampleRate) != 0) {
+	memset(audioBuf, 0, AUDIO_BUFFER_SIZE * 2);
+	if (BSP_AUDIO_OUT_Init(OUTPUT_DEVICE_AUTO, VOLUME, SAMPLE_RATE) != 0) {
 		Error_Handler();
 	}
 
 	isPressed = 0;
-	useRecordBuffer = 0;
+	currentPos = audioBuf;
+	BSP_AUDIO_OUT_Play(currentPos, AUDIO_BUFFER_SIZE2);
 
-	audioTotalSize = AUDIO_FILE_SIZE;
-	currentPos = (uint16_t*) AUDIO_FILE_ADDRESS;
-	BSP_AUDIO_OUT_Play(currentPos, audioTotalSize);
-	audioRemSize = audioTotalSize - AUDIODATA_SIZE * DMA_MAX(audioTotalSize);
-	currentPos += DMA_MAX(audioTotalSize);
+	while (1) {
+	}
 
-	while (!isPressed) {
-		if (playbackState == PAUSE_STATUS) {
-			BSP_LED_Off(LED_GREEN);
-			BSP_LED_On(LED_RED);
-			BSP_AUDIO_OUT_Pause();
-			playbackState = IDLE_STATUS;
-		} else if (playbackState == RESUME_STATUS) {
-			BSP_LED_Off(LED_RED);
-			BSP_LED_On(LED_GREEN);
-			BSP_AUDIO_OUT_Resume();
-			playbackState = IDLE_STATUS;
+//	if (BSP_AUDIO_OUT_Stop(CODEC_PDWN_HW) != AUDIO_OK) {
+//		Error_Handler();
+//	}
+}
+
+void updateOscillator() {
+	for (uint16_t i = 0; i < AUDIO_BUFFER_SIZE4; i++) {
+		float y = sinf(osc->phase) * osc->amp;
+		osc->phase += osc->freq;
+		if (osc->phase >= M_TWOPI) {
+			osc->phase -= M_TWOPI;
 		}
+		int16_t yint = (int16_t) (y * 32767.0f);
+		*currentPos++ = yint;
+		*currentPos++ = yint;
 	}
+}
 
-	if (BSP_AUDIO_OUT_Stop(CODEC_PDWN_HW) != AUDIO_OK) {
-		Error_Handler();
-	}
+void BSP_AUDIO_OUT_HalfTransfer_CallBack(void) {
+	updateOscillator();
 }
 
 // DMA callback: Calculates remaining file size & new position of the pointer
 void BSP_AUDIO_OUT_TransferComplete_CallBack() {
-	uint32_t isLooping = 0;
-
-	if (audioRemSize > 0) {
-		BSP_AUDIO_OUT_ChangeBuffer(currentPos,
-				DMA_MAX(audioRemSize/AUDIODATA_SIZE));
-		currentPos += DMA_MAX(audioRemSize);
-		audioRemSize -= AUDIODATA_SIZE * DMA_MAX(audioRemSize / AUDIODATA_SIZE);
-	} else {
-		isLooping = 1;
-	}
-
-	if (isLooping) {
-		if (useRecordBuffer) {
-			BSP_AUDIO_OUT_Play(recordBuffer, audioTotalSize);
-		} else {
-			currentPos = (uint16_t*) AUDIO_FILE_ADDRESS;
-			BSP_AUDIO_OUT_Play(currentPos, audioTotalSize);
-			audioRemSize = audioTotalSize
-					- AUDIODATA_SIZE * DMA_MAX(audioTotalSize);
-			currentPos += DMA_MAX(audioTotalSize);
-		}
-	}
+	BSP_AUDIO_OUT_ChangeBuffer(currentPos, AUDIO_BUFFER_SIZE);
+	updateOscillator();
+	currentPos = audioBuf;
 }
 
 void BSP_AUDIO_OUT_Error_CallBack(void) {
