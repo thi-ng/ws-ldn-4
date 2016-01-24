@@ -36,15 +36,9 @@ inline float ct_mixf(const float a, const float b, const float t) {
     return a + (b - a) * t;
 }
 
-#if defined(__arm__)
-inline int16_t ct_clamp16(const int32_t x) {
-    __SSAT(x, 16);
-}
-#else
 inline int16_t ct_clamp16(const int32_t x) {
     return (int16_t)((x < -0x7fff) ? -0x8000 : (x > 0x7fff ? 0x7fff : x));
 }
-#endif
 
 // Approximates cos(pi*x) for x in [-1,1]
 inline float ct_norm_cos(const float x) {
