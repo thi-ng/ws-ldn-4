@@ -66,10 +66,12 @@ int main() {
 }
 
 static void initAppGUI() {
-	gui = initGUI(2);
+	gui = initGUI(3);
 	gui->items[0] = guiDialButton(0, "Volume", 10, 10, 0.0f, 0.025f, &dialSheet,
 	NULL);
 	gui->items[1] = guiDialButton(1, "Freq", 80, 10, 0.0f, 0.025f, &dialSheet,
+	NULL);
+	gui->items[2] = guiDialButton(2, "Filter", 150, 10, 0.0f, 0.025f, &dialSheet,
 	NULL);
 	//gui->items[1] = guiPushButton(1, "Test", 10, 100, 1.0f, &soloSheet, NULL);
 }

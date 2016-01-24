@@ -1,208 +1,114 @@
-#ifndef __SYNTH_H
-#define __SYNTH_H
+#pragma once
 
+#include <stdlib.h>
 #include <stdint.h>
-#include "arm_math.h"
-#include "synth/wavetable.h"
-#include "tinymt32.h"
-
-#define TAU						(6.283185307f)
-//#define PI						(3.14159265f)
-#define HALF_PI					(1.570796326794897f)
-#define INV_TAU					(1.0f / TAU)
-#define INV_PI					(1.0f / PI)
-#define INV_HALF_PI				(1.0f / HALF_PI)
-
-#define SAMPLERATE				(44100)
-#define INV_SAMPLERATE			(1.0f / SAMPLERATE)
-#define INV_NYQUIST_FREQ		(2.0f / (float)SAMPLERATE)
-
-#ifndef SYNTH_POLYPHONY
-#define SYNTH_POLYPHONY			(6)
-#endif
-
-#define SYNTH_SATURATE_BITS		16
-#define SYNTH_OVERDRIVE_BITS	0
+#include <stdio.h>
+#include "ct_math.h"
 
 #ifndef AUDIO_BUFFER_SIZE
-#define AUDIO_BUFFER_SIZE		(256)
+#define AUDIO_BUFFER_SIZE 32
+#endif
+#define AUDIO_BUFFER_SIZE2 (AUDIO_BUFFER_SIZE << 1)
+#define AUDIO_BUFFER_SIZE4 (AUDIO_BUFFER_SIZE << 2)
+
+#ifndef SAMPLE_RATE
+#define SAMPLE_RATE 44100
 #endif
 
-#ifndef SYNTH_RNG_SEED
-#define SYNTH_RNG_SEED			(0xcafebad)
-#endif
+#define INV_SAMPLE_RATE (1.0f / (float)SAMPLE_RATE)
+#define NYQUIST_FREQ (SAMPLE_RATE >> 1)
+#define INV_NYQUIST_FREQ (1.0f / (float)NYQUIST_FREQ)
+#define TAU_RATE (TAU / (float)SAMPLE_RATE)
+#define INV_TAU_RATE ((float)SAMPLE_RATE / TAU)
 
-#define ADSR_SCALE				(32767.0f)
-#define INV_ADSR_SCALE			(1.0f / ADSR_SCALE)
+#define HZ_TO_RAD(freq) ((freq)*TAU_RATE)
+#define RAD_TO_HZ(freq) ((freq)*INV_TAU_RATE)
+#define TIME_TO_FS_RATE(t) (1.0f / (SAMPLE_RATE * (t)))
+#define TRUNC_PHASE(phase)                                                     \
+    if (phase >= TAU) {                                                        \
+        phase -= TAU;                                                          \
+    } else if (phase < 0.0) {                                                  \
+        phase += TAU;                                                          \
+    }
 
-//#define SYNTH_USE_DELAY
-#define DELAY_LENGTH			(uint32_t)(SAMPLERATE * 0.375f)
+#define TRUNC_NORM(x)                                                          \
+    if (x >= 1.0f) {                                                           \
+        x -= 1.0f;                                                             \
+    } else if (x < 0.0f) {                                                     \
+        x += 1.0f;                                                             \
+    }
 
-#define FREQ_TO_RAD(freq)		((TAU * (freq)) / (float)SAMPLERATE)
+#define NODE_ID(p, id) ct_synth_node_for_id((p), (id))
+#define NODE_ID_STATE(type, p, id) ((type *)(NODE_ID(p, id)->state))
 
-#define RANDF(rnd)				tinymt32_generate_float(rnd)
-#define NORM_RANDF(rnd)			maddf(RANDF(rnd), 2.0f, -1.0f)
+typedef struct CT_DSPNode CT_DSPNode;
+typedef struct CT_DSPStack CT_DSPStack;
+typedef struct CT_Synth CT_Synth;
 
-inline float truncPhase(float phase) {
-	while (phase >= TAU) {
-		phase -= TAU;
-	}
-	return phase;
-}
+typedef uint8_t (*CT_DSPNodeHandler)(CT_DSPNode *node, CT_DSPStack *stack,
+                                     CT_Synth *synth, uint32_t offset);
 
-inline float clampf(float x, float min, float max) {
-	return (x < min) ? min : (x > max ? max : x);
-}
+typedef void *CT_DSPState;
 
-inline int16_t clamp16(int32_t x) {
-	return (int16_t) ((x < -0x7fff) ? -0x8000 : (x > 0x7fff ? 0x7fff : x));
-}
+typedef enum { STACK_ACTIVE = 1 } CT_DSPStackFlag;
 
-inline float stepf(float x, float edge, float y1, float y2) {
-	return (x < edge ? y1 : y2);
-}
-
-inline float maddf(float a, float b, float c) {
-	return a * b + c;
-}
-
-inline float mixf(float a, float b, float t) {
-	return maddf(b - a, t, a);
-}
-
-typedef struct SynthOsc SynthOsc;
-
-typedef float (*OscFn)(SynthOsc*, float lfo, float lfo2);
-
-struct SynthOsc {
-	OscFn fn;
-	float phase;
-	float freq;
-	float amp;
-	float dcOffset;
-	const float *wtable1;
-	const float *wtable2;
+struct CT_DSPNode {
+    float *buf;
+    CT_DSPNodeHandler handler;
+    CT_DSPState state;
+    CT_DSPNode *next;
+    char *id;
 };
 
-typedef enum {
-	IDLE = 0, ATTACK = 1, DECAY = 2, SUSTAIN = 3, RELEASE = 4
-} ADSRPhase;
-
-typedef struct ADSR ADSR;
-
-typedef float (*ADSRFn)(ADSR*, float envMod);
-
-struct ADSR {
-	float currGain;
-	float attackGain;
-	float sustainGain;
-	float attackRate;
-	float decayRate;
-	float releaseRate;
-	ADSRFn fn;
-	ADSRPhase phase;
+struct CT_DSPStack {
+    CT_DSPNode *startNode;
+    uint8_t flags;
 };
 
-typedef enum {
-	IIR_LP = 0, IIR_HP, IIR_BP, IIR_BR
-} FilterType;
-
-typedef struct SynthFilter SynthFilter;
-
-typedef float (*FilterFn)(SynthFilter*, float input);
-
-struct SynthFilter {
-	float* src;
-	float* lfo;
-	float f[4];
-	float g[4];
-	float cutoff;
-	float resonance;
-	float freq;
-	float damp;
-	FilterType type;
-	FilterFn fn;
+struct CT_Synth {
+    CT_DSPStack *stacks;
+    CT_DSPStack post[1];
+    CT_DSPNode *lfo[4];
+    float **stackOutputs;
+    uint8_t numStacks;
+    uint8_t numLFO;
 };
 
-typedef struct {
-	SynthOsc osc[2];
-	SynthOsc lfoPitch;
-	SynthOsc lfoMorph;
-	ADSR env;
-	SynthFilter filter[2];
-	uint32_t flags;
-	uint32_t age;
-} SynthVoice;
+const float ct_synth_notes[96];
+const float ct_synth_zero[AUDIO_BUFFER_SIZE];
 
-typedef struct {
-	int16_t *buf;
-	size_t len;
-	uint32_t readPos;
-	uint32_t writePos;
-	int16_t *readPtr;
-	int16_t *writePtr;
-	int16_t inL;
-	int16_t inR;
-	uint8_t decay;
-} SynthFXBus;
+void ct_synth_init(CT_Synth *synth, uint8_t numStacks);
+void ct_synth_update(CT_Synth *synth);
+void ct_synth_init_stack(CT_DSPStack *stack);
+void ct_synth_build_stack(CT_DSPStack *stack, CT_DSPNode **nodes,
+                          uint8_t length);
+void ct_synth_collect_stacks(CT_Synth *synth);
 
-typedef struct {
-	SynthVoice voices[SYNTH_POLYPHONY];
-	SynthOsc lfoFilter;
-	SynthOsc lfoEnvMod;
-	SynthFXBus bus[1];
-	uint8_t nextVoice;
-} Synth;
+void ct_synth_update_mix_mono_i16(CT_Synth *synth, uint32_t frames,
+                                  int16_t *out);
+void ct_synth_update_mix_stereo_i16(CT_Synth *synth, uint32_t frames,
+                                    int16_t *out);
+void ct_synth_update_mix_mono_f32(CT_Synth *synth, uint32_t frames, float *out);
+void ct_synth_update_mix_stereo_f32(CT_Synth *synth, uint32_t frames,
+                                    float *out);
 
-float synth_pinknoise_buf[16];
+void ct_synth_init_node(CT_DSPNode *node, char *id, uint8_t channels);
+CT_DSPNode *ct_synth_node(char *id, uint8_t channels);
+void ct_synth_free_node_state(CT_DSPNode *node);
 
-void synth_osc_init(SynthOsc *osc, OscFn fn, float gain, float phase,
-		float freq, float dc);
-void synth_osc_set_wavetables(SynthOsc *osc, const float *tbl1,
-		const float *tbl2);
-float synth_osc_sin(SynthOsc *osc, float lfo, float lfo2);
-float synth_osc_sin_math(SynthOsc *osc, float lfo, float lfo2);
-float synth_osc_sin_dc(SynthOsc *osc, float lfo, float lfo2);
-float synth_osc_sin2(SynthOsc *osc, float lfo, float lfo2);
-float synth_osc_rect(SynthOsc *osc, float lfo, float lfo2);
-float synth_osc_rect_phase(SynthOsc *osc, float lfo, float lfo2);
-float synth_osc_rect_dc(SynthOsc *osc, float lfo, float lfo2);
-float synth_osc_saw(SynthOsc *osc, float lfo, float lfo2);
-float synth_osc_saw_dc(SynthOsc *osc, float lfo, float lfo2);
-float synth_osc_tri(SynthOsc *osc, float lfo, float lfo2);
-float synth_osc_tri_dc(SynthOsc *osc, float lfo, float lfo2);
-float synth_osc_whitenoise(SynthOsc *osc, float lfo, float lfo2);
-float synth_osc_whitenoise_dc(SynthOsc *osc, float lfo, float lfo2);
-float synth_osc_brownnoise(SynthOsc *osc, float lfo, float lfo2);
-float synth_osc_pinknoise(SynthOsc *osc, float lfo, float lfo2);
-float synth_osc_nop(SynthOsc *osc, float lfo, float lfo2);
-float synth_osc_impulse(SynthOsc *osc, float lfo, float lfo2);
-float synth_osc_wtable_simple(SynthOsc *osc, float lfo, float lfo2);
-float synth_osc_wtable_morph(SynthOsc *osc, float lfo, float lfo2);
+void ct_synth_activate_stack(CT_DSPStack *stack);
+void ct_synth_process_stack(CT_DSPStack *stack, CT_Synth *synth,
+                            uint32_t offset);
+void ct_synth_stack_append(CT_DSPStack *stack, CT_DSPNode *node);
+CT_DSPNode *ct_synth_stack_last_node(CT_DSPStack *stack);
+CT_DSPNode *ct_synth_node_for_id(CT_DSPStack *stack, const char *id);
 
-void synth_adsr_init(ADSR *env, float attRate, float decayRate,
-		float releaseRate, float attGain, float sustainGain);
-float synth_adsr_update_attack(ADSR *env, float envMod);
-float synth_adsr_update_decay(ADSR *env, float envMod);
-float synth_adsr_update_release(ADSR *env, float envMod);
-float synth_adsr_update_idle(ADSR *env, float envMod);
+void ct_synth_trace_stack(CT_DSPStack *stack);
+void ct_synth_trace_node(CT_DSPNode *node);
 
-void synth_bus_init(SynthFXBus *bus, int16_t *buf, size_t len, uint8_t decay);
-
-void synth_voice_init(SynthVoice *voice, uint32_t flags);
-void synth_init(Synth *synth);
-
-SynthVoice* synth_new_voice(Synth *synth);
-void synth_render_slice(Synth *synth, int16_t *ptr, size_t len);
-
-void synth_init_iir(SynthFilter *state, FilterType type, float cutoff,
-		float reso, float damping);
-void synth_set_iir_coeff(SynthFilter *iir, float cutoff, float reso,
-		float damping);
-float synth_process_iir(SynthFilter *state, float input);
-
-void synth_init_4pole(SynthFilter *state, float cutoff, float reso);
-void synth_set_4pole_coeff(SynthFilter *state, float cutoff, float reso);
-float synth_process_4pole(SynthFilter *state, float input);
-
-#endif
+void ct_synth_mixdown_i16(float **in, int16_t *out, uint32_t offset,
+                          uint32_t len, const uint8_t num,
+                          const uint8_t stride);
+void ct_synth_mixdown_f32(float **sources, float *out, uint32_t offset,
+                          uint32_t len, const uint8_t num,
+                          const uint8_t stride);
