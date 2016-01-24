@@ -15,12 +15,15 @@ int main(void) {
 	SystemClock_Config();
 	BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_EXTI);
 
+	BSP_LCD_Init();
+	BSP_LCD_LayerDefaultInit(LTDC_ACTIVE_LAYER, LCD_FRAME_BUFFER);
+	BSP_LCD_SelectLayer(LTDC_ACTIVE_LAYER);
+
 	while (1) {
 		isPressed = 0;
 		demos[demoID]();
-		BSP_LED_On(LED_GREEN);
-		while (!isPressed);
-		BSP_LED_Off(LED_GREEN);
+		while (!isPressed)
+			;
 	}
 }
 

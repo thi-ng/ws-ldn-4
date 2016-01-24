@@ -2,9 +2,12 @@
 #include "stm32f7xx_hal.h"
 #include "stm32746g_discovery.h"
 #include "stm32746g_discovery_audio.h"
+#include "stm32746g_discovery_lcd.h"
 #include "stm32f7xx_it.h"
 #include "clockconfig.h"
 #include "ex04/audio_play.h"
+
+#define LCD_FRAME_BUFFER SDRAM_DEVICE_ADDR
 
 typedef void (*DemoFn)(void);
 
