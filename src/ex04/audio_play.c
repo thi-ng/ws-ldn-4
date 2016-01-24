@@ -89,7 +89,7 @@ static void initSynth() {
 
 static void updateAudioBuffer() {
 	if (bufferState == BUFFER_OFFSET_HALF) {
-		int16_t *ptr = (int16_t*) &audioBuf;
+		int16_t *ptr = (int16_t*) audioBuf;
 		ct_synth_update_mix_stereo_i16(&synth, AUDIO_DMA_BUFFER_SIZE2, ptr);
 		bufferState = BUFFER_OFFSET_NONE;
 	}
