@@ -22,12 +22,14 @@ static __IO DMABufferState bufferState = BUFFER_OFFSET_NONE;
 static CT_Synth synth;
 static uint8_t volume = VOLUME;
 
-static const uint8_t scale[] = { 36, 40, 43, 45, 55, 52, 48, 60 };
+static const uint8_t scale[] = { 36, 40, 43, 45, 55, 52, 48, 60, 52, 55, 45, 48,
+		36, 43, 31, 33 };
 uint32_t noteID = 0;
 uint32_t voiceID = 0;
 uint32_t lastNote = 0;
 float filterCutoff = 8000.0f;
 float filterQ = 0.5f;
+float feedback = 0.3f;
 
 static uint8_t audioBuf[AUDIO_DMA_BUFFER_SIZE];
 
@@ -45,6 +47,7 @@ static void drawGUI();
 static void gui_cb_setVolume(GUIElement *e);
 static void gui_cb_setFilterCutOff(GUIElement *e);
 static void gui_cb_setFilterQ(GUIElement *e);
+static void gui_cb_setFeedback(GUIElement *e);
 
 void demoAudioPlayback(void) {
 	BSP_LCD_Clear(LCD_COLOR_BLACK);
@@ -70,13 +73,15 @@ void demoAudioPlayback(void) {
 }
 
 static void initAppGUI() {
-	gui = initGUI(3);
-	gui->items[0] = guiDialButton(0, "Volume", 10, 10, (float)volume / 80.0f, 0.025f, &dialSheet,
-			gui_cb_setVolume);
-	gui->items[1] = guiDialButton(1, "Freq", 80, 10, filterCutoff / 8000.0f, 0.025f, &dialSheet,
-			gui_cb_setFilterCutOff);
-	gui->items[2] = guiDialButton(1, "Res", 150, 10, filterQ / 1.0f, 0.025f, &dialSheet,
-			gui_cb_setFilterQ);
+	gui = initGUI(4);
+	gui->items[0] = guiDialButton(0, "Volume", 10, 10, (float) volume / 80.0f,
+			UI_SENSITIVITY, &dialSheet, gui_cb_setVolume);
+	gui->items[1] = guiDialButton(1, "Freq", 80, 10, filterCutoff / 8000.0f,
+			UI_SENSITIVITY, &dialSheet, gui_cb_setFilterCutOff);
+	gui->items[2] = guiDialButton(2, "Res", 150, 10, filterQ / 1.0f,
+			UI_SENSITIVITY, &dialSheet, gui_cb_setFilterQ);
+	gui->items[3] = guiDialButton(3, "Feedback", 220, 10, feedback / 1.0f,
+			UI_SENSITIVITY, &dialSheet, gui_cb_setFeedback);
 	guiForceRedraw(gui);
 }
 
@@ -87,12 +92,17 @@ static void gui_cb_setVolume(GUIElement *e) {
 
 static void gui_cb_setFilterCutOff(GUIElement *e) {
 	DialButtonState *db = (DialButtonState *) (e->userData);
-	filterCutoff = 220.0f + db->value * 8000.0f;
+	filterCutoff = 220.0f + expf(4.5f * db->value - 3.5f) / 2.7f * 8000.0f;
 }
 
 static void gui_cb_setFilterQ(GUIElement *e) {
 	DialButtonState *db = (DialButtonState *) (e->userData);
-	filterQ = 0.1f + db->value * 0.9f;
+	filterQ = 1.0f - db->value * 0.9f;
+}
+
+static void gui_cb_setFeedback(GUIElement *e) {
+	DialButtonState *db = (DialButtonState *) (e->userData);
+	feedback = db->value * 0.8f;
 }
 
 static void drawGUI() {
@@ -104,8 +114,8 @@ static void drawGUI() {
 }
 
 static void initStack(CT_DSPStack *stack, float freq) {
-	CT_DSPNode *env = ct_synth_adsr("e", synth.lfo[0], 0.005f, 0.1f, 0.3f,
-			1.0f, 0.5f);
+	CT_DSPNode *env = ct_synth_adsr("e", synth.lfo[0], 0.01f, 0.05f, 0.2f, 1.0f,
+			0.5f);
 	CT_DSPNode *osc1 = ct_synth_osc("a", ct_synth_process_osc_spiral, 0.0f,
 			HZ_TO_RAD(freq), 0.25f, 0.0f);
 	CT_DSPNode *osc2 = ct_synth_osc("b", ct_synth_process_osc_spiral, 0.0f,
@@ -114,8 +124,8 @@ static void initStack(CT_DSPStack *stack, float freq) {
 			ct_synth_process_madd);
 	CT_DSPNode *filter = ct_synth_filter_biquad("f", LPF, sum, filterCutoff,
 			12.0f, filterQ);
-	CT_DSPNode *delay = ct_synth_delay("d", filter,
-			(int) (SAMPLE_RATE * 0.15f), 0.7f, 1);
+	CT_DSPNode *delay = ct_synth_delay("d", filter, (int) (SAMPLE_RATE * 0.15f),
+			feedback, 1);
 	CT_DSPNode *pan = ct_synth_panning("p", delay, NULL, 0.5f);
 	//CT_DSPNode *nodes[] = { env, osc1, osc2, sum, filter, delay, pan };
 	CT_DSPNode *nodes[] = { env, osc1, osc2, sum, filter, delay, pan };
@@ -143,13 +153,15 @@ void updateOscillator(int16_t *ptr, uint32_t frames) {
 		CT_OscState *osc2 = NODE_ID_STATE(CT_OscState, s, "b");
 		osc1->freq = HZ_TO_RAD(ct_synth_notes[scale[noteID]]);
 		osc2->freq = HZ_TO_RAD(ct_synth_notes[scale[noteID]] * 0.51f);
-		ct_synth_calculate_biquad_coeff(NODE_ID(s, "f"), LPF,
-				//(float) ((lastNote * 4) % 11000) + 110.0f, 12.0f, 0.25f);
-				filterCutoff, 12.0f, filterQ);
+		osc1->phase = 0;
+		osc2->phase = 0;
+		ct_synth_calculate_biquad_coeff(NODE_ID(s, "f"), LPF, filterCutoff,
+				12.0f, filterQ);
+		NODE_ID_STATE(CT_DelayState, s, "d")->feedback = feedback;
 //		NODE_ID_STATE(CT_PanningState, s, "p")->pos =
-//				(voiceID % 2) ? 0.1f : 0.9f;
+//				(voiceID % 2) ? 0.4f : 0.6f;
 		ct_synth_activate_stack(s);
-		noteID = (noteID + 1) % 8;
+		noteID = (noteID + 1) % 16;
 		voiceID = (voiceID + 1) % synth.numStacks;
 	}
 	ct_synth_update_mix_stereo_i16(&synth, frames, ptr);

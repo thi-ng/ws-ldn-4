@@ -3,6 +3,7 @@
 #define UI_BG_COLOR   ((uint32_t)0xff000000)
 #define UI_TEXT_COLOR ((uint32_t)0xffffffff)
 #define UI_FONT Font12
+#define UI_SENSITIVITY 0.02f
 
 typedef struct {
 	uint16_t touchX[1];
