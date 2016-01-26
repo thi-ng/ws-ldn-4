@@ -194,7 +194,7 @@ void ct_synth_mixdown_i16(float **sources, int16_t *out, uint32_t offset,
     uint32_t i = 0;
     while (len--) {
         float sum = 0;
-        uint8_t n = num;
+        uint32_t n = num;
         while (n--) {
             sum += *(sources[n] + i);
         }
@@ -209,7 +209,7 @@ void ct_synth_mixdown_f32(float **sources, float *out, uint32_t offset,
                           const uint8_t stride) {
     while (len--) {
         float sum = 0;
-        uint8_t n = num;
+        uint32_t n = num;
         while (n--) {
             sum += *(sources[n] + offset);
         }
