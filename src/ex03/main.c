@@ -1,6 +1,7 @@
 #include <math.h>
 #include "ex03/main.h"
 #include "gui/bt_blackangle64_16.h"
+//#include "gui/bt_blackangle48_12.h"
 #include "gui/bt_solo32.h"
 #include "macros.h"
 
@@ -19,8 +20,13 @@ static void initAppGUI();
 DemoFn demos[] = { demoGUI, demoWelcome, demoGraph, demoScribble };
 uint32_t demoID = 0;
 
-static TS_StateTypeDef touchState;
+static TS_StateTypeDef rawTouchState;
+static GUITouchState touchState;
+
 __IO uint32_t isPressed = 0;
+
+//static SpriteSheet dialSheet = { .pixels = bt_blackangle48_12,
+//		.spriteWidth = 48, .spriteHeight = 48, .numSprites = 12 };
 
 static SpriteSheet dialSheet = { .pixels = bt_blackangle64_16,
 		.spriteWidth = 64, .spriteHeight = 64, .numSprites = 16 };
@@ -48,12 +54,12 @@ int main() {
 			demos[demoID]();
 			demoID = (demoID + 1) % NUM_DEMOS;
 			while (!isPressed) {
-				BSP_TS_GetState(&touchState);
-				if (touchState.touchDetected) {
+				BSP_TS_GetState(&rawTouchState);
+				if (rawTouchState.touchDetected) {
 					do {
-						BSP_TS_GetState(&touchState);
+						BSP_TS_GetState(&rawTouchState);
 						HAL_Delay(10);
-					} while (touchState.touchDetected);
+					} while (rawTouchState.touchDetected);
 					break;
 				}
 				HAL_Delay(10);
@@ -85,7 +91,8 @@ static void demoGUI() {
 	guiForceRedraw(gui);
 
 	while (!isPressed) {
-		BSP_TS_GetState(&touchState);
+		BSP_TS_GetState(&rawTouchState);
+		guiUpdateTouch(&rawTouchState, &touchState);
 		guiUpdate(gui, &touchState);
 		HAL_Delay(10);
 	}
@@ -124,12 +131,12 @@ static void demoScribble() {
 	uint16_t height = BSP_LCD_GetYSize();
 	BSP_LCD_Clear(LCD_COLOR_WHITE);
 	while (!isPressed) {
-		BSP_TS_GetState(&touchState);
-		if (touchState.touchDetected) {
-			for (uint8_t i = 0; i < MIN(touchState.touchDetected, 5); i++) {
+		BSP_TS_GetState(&rawTouchState);
+		if (rawTouchState.touchDetected) {
+			for (uint8_t i = 0; i < MIN(rawTouchState.touchDetected, 5); i++) {
 				BSP_LCD_SetTextColor(cols[i]);
-				BSP_LCD_FillCircle(CLAMP(touchState.touchX[i], 6, width - 6),
-						CLAMP(touchState.touchY[i], 6, height - 6), 5);
+				BSP_LCD_FillCircle(CLAMP(rawTouchState.touchX[i], 6, width - 6),
+						CLAMP(rawTouchState.touchY[i], 6, height - 6), 5);
 			}
 		}
 		HAL_Delay(10);
