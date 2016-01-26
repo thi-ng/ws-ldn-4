@@ -191,16 +191,15 @@ void ct_synth_update(CT_Synth *synth) {
 void ct_synth_mixdown_i16(float **sources, int16_t *out, uint32_t offset,
                           uint32_t len, const uint8_t num,
                           const uint8_t stride) {
-    uint32_t i = 0;
     while (len--) {
         float sum = 0;
         uint32_t n = num;
         while (n--) {
-            sum += *(sources[n] + i);
+            sum += *(sources[n] + offset);
         }
         *out = ct_clamp16((int32_t)(sum * 32767.0f));
         out += stride;
-        i += stride;
+        offset += stride;
     }
 }
 
