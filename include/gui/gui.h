@@ -4,11 +4,19 @@
 #define UI_TEXT_COLOR ((uint32_t)0xffffffff)
 #define UI_FONT Font12
 
+typedef struct {
+	uint16_t touchX[1];
+	uint16_t touchY[1];
+	uint32_t lastTouch;
+	uint8_t touchDetected;
+	uint8_t touchUpdate;
+} GUITouchState;
+
 // forward declaration for function pointers below
 typedef struct GUIElement GUIElement;
 
 typedef void (*GUIElementHandler)(GUIElement *button,
-		TS_StateTypeDef *touchState);
+		GUITouchState *touchState);
 typedef void (*GUIElementRenderer)(GUIElement *button);
 typedef void (*GUICallback)(GUIElement *button);
 
@@ -61,10 +69,10 @@ typedef struct {
 	int8_t selected;
 } GUI;
 
-void handlePushButton(GUIElement *bt, TS_StateTypeDef *touch);
+void handlePushButton(GUIElement *bt, GUITouchState *touch);
 void renderPushButton(GUIElement *bt);
 
-void handleDialButton(GUIElement *bt, TS_StateTypeDef *touch);
+void handleDialButton(GUIElement *bt, GUITouchState *touch);
 void renderDialButton(GUIElement *bt);
 
 void drawSprite(uint16_t x, uint16_t y, uint8_t id, SpriteSheet *sprite);
@@ -73,7 +81,8 @@ void drawBitmapRaw(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
 
 GUI *initGUI(uint8_t num);
 void guiForceRedraw(GUI *gui);
-void guiUpdate(GUI *gui, TS_StateTypeDef *touch);
+void guiUpdate(GUI *gui, GUITouchState *touch);
+void guiUpdateTouch(TS_StateTypeDef *raw, GUITouchState *touch);
 
 GUIElement *guiElementCommon(uint8_t id, char *label, uint16_t x, uint16_t y,
 		SpriteSheet *sprite, GUICallback cb);

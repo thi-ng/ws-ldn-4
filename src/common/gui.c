@@ -18,7 +18,7 @@ extern void LL_ConvertLineToARGB8888(void * pSrc, void *pDst, uint32_t xSize,
 
 // push button functions
 
-void handlePushButton(GUIElement *bt, TS_StateTypeDef *touch) {
+void handlePushButton(GUIElement *bt, GUITouchState *touch) {
 	if (touch->touchDetected) {
 		// touch detected...
 		uint16_t x = touch->touchX[0];
@@ -63,7 +63,7 @@ void renderPushButton(GUIElement *bt) {
 
 // dial button functions
 
-void handleDialButton(GUIElement *bt, TS_StateTypeDef *touch) {
+void handleDialButton(GUIElement *bt, GUITouchState *touch) {
 	if (touch->touchDetected) {
 		// touch detected...
 		uint16_t x = touch->touchX[0];
@@ -108,6 +108,7 @@ void renderDialButton(GUIElement *bt) {
 static void drawElementLabel(GUIElement *e) {
 	if (e->label != NULL) {
 		SpriteSheet *sprite = e->sprite;
+		BSP_LCD_SetBackColor(UI_BG_COLOR);
 		BSP_LCD_SetTextColor(UI_TEXT_COLOR);
 		BSP_LCD_DisplayStringAt(e->x, e->y + sprite->spriteHeight + 4,
 				(uint8_t*) e->label, LEFT_MODE);
@@ -204,10 +205,16 @@ void guiForceRedraw(GUI *gui) {
 	}
 }
 
-void guiUpdate(GUI *gui, TS_StateTypeDef *touch) {
+void guiUpdate(GUI *gui, GUITouchState *touch) {
 	for (uint8_t i = 0; i < gui->numItems; i++) {
 		GUIElement *e = gui->items[i];
 		e->handler(e, touch);
 		e->render(e);
 	}
+}
+
+void guiUpdateTouch(TS_StateTypeDef *raw, GUITouchState *touch) {
+	touch->touchDetected = raw->touchDetected;
+	touch->touchX[0] = raw->touchX[0];
+	touch->touchY[0] = raw->touchY[0];
 }
