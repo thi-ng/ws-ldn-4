@@ -8,9 +8,12 @@ __IO uint32_t isPressed = 0;
 __IO uint32_t numPressed = 0;
 __IO PlaybackState playbackState = IDLE_STATUS;
 __IO GUITouchState touchState;
+TIM_HandleTypeDef TimHandle;
 
 extern TS_DrvTypeDef *tsDriver;
 extern uint8_t TS_I2cAddress;
+
+static void initTimer(uint16_t period);
 
 int main(void) {
 	HAL_Init();
@@ -24,9 +27,37 @@ int main(void) {
 	BSP_LCD_SelectLayer(LTDC_ACTIVE_LAYER);
 	BSP_TS_Init(BSP_LCD_GetXSize(), BSP_LCD_GetYSize());
 	BSP_TS_ITConfig();
+
+	initTimer(20);
+
 	touchState.touchDetected = 0;
 	touchState.lastTouch = 0;
 	demos[demoID]();
+}
+
+static void initTimer(uint16_t period) {
+	uint32_t prescaler = (uint32_t) ((SystemCoreClock / 2) / 10000) - 1;
+	TimHandle.Instance = TIMx;
+
+	/* Initialize TIMx peripheral as follows:
+	 * Period = 10000 - 1
+	 * Prescaler = ((SystemCoreClock / 2)/10000) - 1
+	 * ClockDivision = 0
+	 * Counter direction = Up
+	 */
+	TimHandle.Init.Period = period - 1;
+	TimHandle.Init.Prescaler = prescaler;
+	TimHandle.Init.ClockDivision = 0;
+	TimHandle.Init.CounterMode = TIM_COUNTERMODE_UP;
+	TimHandle.Init.RepetitionCounter = 0;
+
+	if (HAL_TIM_Base_Init(&TimHandle) != HAL_OK) {
+		Error_Handler();
+	}
+
+	if (HAL_TIM_Base_Start_IT(&TimHandle) != HAL_OK) {
+		Error_Handler();
+	}
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
@@ -39,7 +70,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	case TS_INT_PIN:
 		BSP_LED_Toggle(LED_GREEN);
 		uint32_t tick = HAL_GetTick();
-		if (tick - touchState.lastTouch > 16) {
+		if (tick - touchState.lastTouch > 1) {
 			touchState.touchUpdate = 1;
 			touchState.lastTouch = tick;
 		}

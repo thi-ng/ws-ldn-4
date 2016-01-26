@@ -1,6 +1,7 @@
 #include "ex04/main.h"
 #include "ex04/stm32f7xx_it.h"
 
+extern TIM_HandleTypeDef TimHandle;
 extern SAI_HandleTypeDef haudio_out_sai;
 
 void Error_Handler(void) {
@@ -30,4 +31,8 @@ void EXTI15_10_IRQHandler(void) {
 
 void AUDIO_OUT_SAIx_DMAx_IRQHandler(void) {
 	HAL_DMA_IRQHandler(haudio_out_sai.hdmatx);
+}
+
+void TIMx_IRQHandler(void) {
+	HAL_TIM_IRQHandler(&TimHandle);
 }

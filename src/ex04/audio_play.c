@@ -27,6 +27,7 @@ uint32_t noteID = 0;
 uint32_t voiceID = 0;
 uint32_t lastNote = 0;
 float filterCutoff = 8000.0f;
+float filterQ = 0.5f;
 
 static uint8_t audioBuf[AUDIO_DMA_BUFFER_SIZE];
 
@@ -42,7 +43,8 @@ static void updateAudioBuffer();
 static void initAppGUI();
 static void drawGUI();
 static void gui_cb_setVolume(GUIElement *e);
-static void gui_cb_setFilter(GUIElement *e);
+static void gui_cb_setFilterCutOff(GUIElement *e);
+static void gui_cb_setFilterQ(GUIElement *e);
 
 void demoAudioPlayback(void) {
 	BSP_LCD_Clear(LCD_COLOR_BLACK);
@@ -58,7 +60,7 @@ void demoAudioPlayback(void) {
 	BSP_AUDIO_OUT_Play((uint16_t *) audioBuf, AUDIO_DMA_BUFFER_SIZE);
 
 	while (1) {
-		updateAudioBuffer();
+		//updateAudioBuffer();
 		drawGUI();
 	}
 
@@ -68,11 +70,13 @@ void demoAudioPlayback(void) {
 }
 
 static void initAppGUI() {
-	gui = initGUI(2);
+	gui = initGUI(3);
 	gui->items[0] = guiDialButton(0, "Volume", 10, 10, (float)volume / 80.0f, 0.025f, &dialSheet,
 			gui_cb_setVolume);
 	gui->items[1] = guiDialButton(1, "Freq", 80, 10, filterCutoff / 8000.0f, 0.025f, &dialSheet,
-			gui_cb_setFilter);
+			gui_cb_setFilterCutOff);
+	gui->items[2] = guiDialButton(1, "Res", 150, 10, filterQ / 1.0f, 0.025f, &dialSheet,
+			gui_cb_setFilterQ);
 	guiForceRedraw(gui);
 }
 
@@ -81,9 +85,14 @@ static void gui_cb_setVolume(GUIElement *e) {
 	BSP_AUDIO_OUT_SetVolume((uint8_t) (db->value * 80.0f));
 }
 
-static void gui_cb_setFilter(GUIElement *e) {
+static void gui_cb_setFilterCutOff(GUIElement *e) {
 	DialButtonState *db = (DialButtonState *) (e->userData);
 	filterCutoff = 220.0f + db->value * 8000.0f;
+}
+
+static void gui_cb_setFilterQ(GUIElement *e) {
+	DialButtonState *db = (DialButtonState *) (e->userData);
+	filterQ = 0.1f + db->value * 0.9f;
 }
 
 static void drawGUI() {
@@ -104,7 +113,7 @@ static void initStack(CT_DSPStack *stack, float freq) {
 	CT_DSPNode *sum = ct_synth_op4("s", osc1, env, osc2, env,
 			ct_synth_process_madd);
 	CT_DSPNode *filter = ct_synth_filter_biquad("f", LPF, sum, filterCutoff,
-			12.0f, 0.25f);
+			12.0f, filterQ);
 	CT_DSPNode *delay = ct_synth_delay("d", filter,
 			(int) (SAMPLE_RATE * 0.15f), 0.7f, 1);
 	CT_DSPNode *pan = ct_synth_panning("p", delay, NULL, 0.5f);
@@ -126,7 +135,7 @@ static void initSynth() {
 }
 
 void updateOscillator(int16_t *ptr, uint32_t frames) {
-	if (HAL_GetTick() - lastNote >= 250) {
+	if (HAL_GetTick() - lastNote >= 150) {
 		lastNote = HAL_GetTick();
 		CT_DSPStack *s = &synth.stacks[voiceID];
 		ct_synth_reset_adsr(NODE_ID(s, "e"));
@@ -136,7 +145,7 @@ void updateOscillator(int16_t *ptr, uint32_t frames) {
 		osc2->freq = HZ_TO_RAD(ct_synth_notes[scale[noteID]] * 0.51f);
 		ct_synth_calculate_biquad_coeff(NODE_ID(s, "f"), LPF,
 				//(float) ((lastNote * 4) % 11000) + 110.0f, 12.0f, 0.25f);
-				filterCutoff, 12.0f, 0.5f);
+				filterCutoff, 12.0f, filterQ);
 //		NODE_ID_STATE(CT_PanningState, s, "p")->pos =
 //				(voiceID % 2) ? 0.1f : 0.9f;
 		ct_synth_activate_stack(s);
@@ -172,4 +181,12 @@ void BSP_AUDIO_OUT_TransferComplete_CallBack(void) {
 
 void BSP_AUDIO_OUT_Error_CallBack(void) {
 	Error_Handler();
+}
+
+// Callback function run whenever timer caused interrupt
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	//BSP_LED_Toggle(LED_GREEN);
+	//__disable_irq();
+	updateAudioBuffer();
+	//__enable_irq();
 }
