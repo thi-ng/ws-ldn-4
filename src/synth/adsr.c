@@ -26,10 +26,12 @@ void ct_synth_reset_adsr(CT_DSPNode *node) {
 
 uint8_t ct_synth_process_adsr(CT_DSPNode *node, CT_DSPStack *stack,
                               CT_Synth *synth, uint32_t offset) {
+	CT_UNUSED(synth);
+	CT_UNUSED(stack);
     CT_ADSRState *state = (CT_ADSRState *)(node->state);
     float *buf = node->buf + offset;
     float *envMod = state->lfo;
-    CT_ADSRPhase prevPhase = state->phase;
+    //CT_ADSRPhase prevPhase = state->phase;
     uint32_t len = AUDIO_BUFFER_SIZE - offset;
     if (envMod != NULL) {
         envMod += offset;

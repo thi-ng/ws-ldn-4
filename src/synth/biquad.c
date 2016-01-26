@@ -1,26 +1,6 @@
 #include <math.h>
 #include "synth/biquad.h"
 
-uint8_t ct_synth_process_biquad(CT_DSPNode *node, CT_DSPStack *stack,
-                                CT_Synth *synth, uint32_t offset) {
-    CT_BiquadState *state = (CT_BiquadState *)node->state;
-    const float *src = state->src + offset;
-    float *buf = node->buf + offset;
-    float *f = state->f;
-    uint32_t len = AUDIO_BUFFER_SIZE - offset;
-    while (len--) {
-        float input = *src++;
-        float x = f[0] * input + f[1] * f[5] + f[2] * f[6] - f[3] * f[7] -
-                  f[4] * f[8];
-        f[6] = f[5];
-        f[5] = input;
-        f[8] = f[7];
-        f[7] = x;
-        *buf++ = x;
-    }
-    return 0;
-}
-
 /* sets up a BiQuad Filter */
 CT_DSPNode *ct_synth_filter_biquad(char *id, CT_BiquadType type,
                                    CT_DSPNode *src, float freq, float dbGain,
@@ -51,6 +31,7 @@ void ct_synth_calculate_biquad_coeff(CT_DSPNode *node, CT_BiquadType type,
 
     switch (type) {
     case LPF:
+    default:
         b0 = (1.0f - cs) / 2.0f;
         b1 = 1.0f - cs;
         b2 = (1.0f - cs) / 2.0f;
@@ -117,4 +98,26 @@ void ct_synth_calculate_biquad_coeff(CT_DSPNode *node, CT_BiquadType type,
     state->f[4] = a2 * a0;
 
     state->f[5] = state->f[6] = state->f[7] = state->f[8] = 0.0f;
+}
+
+uint8_t ct_synth_process_biquad(CT_DSPNode *node, CT_DSPStack *stack,
+                                CT_Synth *synth, uint32_t offset) {
+	CT_UNUSED(synth);
+	CT_UNUSED(stack);
+    CT_BiquadState *state = (CT_BiquadState *)node->state;
+    const float *src = state->src + offset;
+    float *buf = node->buf + offset;
+    float *f = state->f;
+    uint32_t len = AUDIO_BUFFER_SIZE - offset;
+    while (len--) {
+        float input = *src++;
+        float x = f[0] * input + f[1] * f[5] + f[2] * f[6] - f[3] * f[7] -
+                  f[4] * f[8];
+        f[6] = f[5];
+        f[5] = input;
+        f[8] = f[7];
+        f[7] = x;
+        *buf++ = x;
+    }
+    return 0;
 }

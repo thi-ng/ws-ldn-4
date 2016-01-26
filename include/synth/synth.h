@@ -38,6 +38,8 @@
         x += 1.0f;                                                             \
     }
 
+#define CT_UNUSED(x) ((void)(x))
+
 #define NODE_ID(p, id) ct_synth_node_for_id((p), (id))
 #define NODE_ID_STATE(type, p, id) ((type *)(NODE_ID(p, id)->state))
 

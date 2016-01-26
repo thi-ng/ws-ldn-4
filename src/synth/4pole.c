@@ -20,6 +20,8 @@ CT_DSPNode *ct_synth_filter_4pole(char *id, CT_DSPNode *src, CT_DSPNode *lfo,
 
 uint8_t ct_synth_process_filter4p(CT_DSPNode *node, CT_DSPStack *stack,
                                   CT_Synth *synth, uint32_t offset) {
+	CT_UNUSED(synth);
+	CT_UNUSED(stack);
     CT_Filter4PoleState *state = (CT_Filter4PoleState *)(node->state);
     float *src = state->src + offset;
     float *lfo = state->lfo + offset;

@@ -20,6 +20,8 @@ CT_DSPNode *ct_synth_delay(char *id, CT_DSPNode *src, uint32_t len,
 
 uint8_t ct_synth_process_delay(CT_DSPNode *node, CT_DSPStack *stack,
                                CT_Synth *synth, uint32_t offset) {
+	CT_UNUSED(synth);
+	CT_UNUSED(stack);
     CT_DelayState *state = (CT_DelayState *)node->state;
     float *read = state->readPtr;
     float *write = state->writePtr;

@@ -38,6 +38,8 @@ void ct_synth_set_osc_pblep(CT_DSPNode *node, CT_PblepOsc fn) {
 
 uint8_t ct_synth_process_osc_sin(CT_DSPNode *node, CT_DSPStack *stack,
                                  CT_Synth *synth, uint32_t offset) {
+	CT_UNUSED(synth);
+	CT_UNUSED(stack);
     CT_OscState *state = (CT_OscState *)node->state;
     const float freq = state->freq;
     const float *lfo = state->lfo + offset;
@@ -56,6 +58,8 @@ uint8_t ct_synth_process_osc_sin(CT_DSPNode *node, CT_DSPStack *stack,
 
 uint8_t ct_synth_process_osc_square(CT_DSPNode *node, CT_DSPStack *stack,
                                     CT_Synth *synth, uint32_t offset) {
+	CT_UNUSED(synth);
+	CT_UNUSED(stack);
     CT_OscState *state = (CT_OscState *)node->state;
     const float freq = state->freq;
     const float *lfo = state->lfo + offset;
@@ -74,6 +78,8 @@ uint8_t ct_synth_process_osc_square(CT_DSPNode *node, CT_DSPStack *stack,
 
 uint8_t ct_synth_process_osc_saw(CT_DSPNode *node, CT_DSPStack *stack,
                                  CT_Synth *synth, uint32_t offset) {
+	CT_UNUSED(synth);
+	CT_UNUSED(stack);
     CT_OscState *state = (CT_OscState *)(node->state);
     const float freq = state->freq;
     const float *lfo = state->lfo + offset;
@@ -92,6 +98,8 @@ uint8_t ct_synth_process_osc_saw(CT_DSPNode *node, CT_DSPStack *stack,
 
 uint8_t ct_synth_process_osc_tri(CT_DSPNode *node, CT_DSPStack *stack,
                                  CT_Synth *synth, uint32_t offset) {
+	CT_UNUSED(synth);
+	CT_UNUSED(stack);
     CT_OscState *state = (CT_OscState *)node->state;
     const float freq = state->freq;
     const float *lfo = state->lfo + offset;
@@ -116,6 +124,8 @@ uint8_t ct_synth_process_osc_tri(CT_DSPNode *node, CT_DSPStack *stack,
 
 uint8_t ct_synth_process_osc_sawsin(CT_DSPNode *node, CT_DSPStack *stack,
                                     CT_Synth *synth, uint32_t offset) {
+	CT_UNUSED(synth);
+	CT_UNUSED(stack);
     CT_OscState *state = (CT_OscState *)node->state;
     const float freq = state->freq;
     const float *lfo = state->lfo + offset;
@@ -136,6 +146,8 @@ uint8_t ct_synth_process_osc_sawsin(CT_DSPNode *node, CT_DSPStack *stack,
 
 uint8_t ct_synth_process_osc_impulse(CT_DSPNode *node, CT_DSPStack *stack,
                                      CT_Synth *synth, uint32_t offset) {
+	CT_UNUSED(synth);
+	CT_UNUSED(stack);
     CT_OscState *state = (CT_OscState *)node->state;
     const float freq = state->freq;
     const float *lfo = state->lfo + offset;
@@ -165,6 +177,8 @@ float ct_osc_pblep_spiral(float t, const float dt, const float lfo) {
 
 uint8_t ct_synth_process_osc_pblep(CT_DSPNode *node, CT_DSPStack *stack,
                                    CT_Synth *synth, uint32_t offset) {
+	CT_UNUSED(synth);
+	CT_UNUSED(stack);
     CT_OscState *state = (CT_OscState *)node->state;
     const float freq = state->freq * INV_TAU;
     const float *lfo = state->lfo + offset;
