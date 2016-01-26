@@ -114,10 +114,10 @@
 /** @defgroup STM32746G_DISCOVERY_TS_Private_Variables STM32746G_DISCOVERY_TS Private Variables
   * @{
   */ 
-static TS_DrvTypeDef *tsDriver;
+TS_DrvTypeDef *tsDriver;
 static uint16_t tsXBoundary, tsYBoundary; 
 static uint8_t  tsOrientation;
-static uint8_t  I2cAddress;
+uint8_t TS_I2cAddress;
 /**
   * @}
   */ 
@@ -152,11 +152,11 @@ uint8_t BSP_TS_Init(uint16_t ts_SizeX, uint16_t ts_SizeY)
   { 
     /* Initialize the TS driver structure */
     tsDriver = &ft5336_ts_drv;
-    I2cAddress = TS_I2C_ADDRESS;
+    TS_I2cAddress = TS_I2C_ADDRESS;
     tsOrientation = TS_SWAP_XY;
 
     /* Initialize the TS driver */
-    tsDriver->Start(I2cAddress);
+    tsDriver->Start(TS_I2cAddress);
   }
   else
   {
@@ -196,7 +196,7 @@ uint8_t BSP_TS_ITConfig(void)
   HAL_NVIC_EnableIRQ((IRQn_Type)(TS_INT_EXTI_IRQn));
 
   /* Enable the TS ITs */
-  tsDriver->EnableIT(I2cAddress);
+  tsDriver->EnableIT(TS_I2cAddress);
 
   return TS_OK;  
 }
@@ -208,7 +208,7 @@ uint8_t BSP_TS_ITConfig(void)
 uint8_t BSP_TS_ITGetStatus(void)
 {
   /* Return the TS IT status */
-  return (tsDriver->GetITStatus(I2cAddress));
+  return (tsDriver->GetITStatus(TS_I2cAddress));
 }
 
 /**
@@ -235,14 +235,14 @@ uint8_t BSP_TS_GetState(TS_StateTypeDef *TS_State)
 #endif /* TS_MULTI_TOUCH_SUPPORTED == 1 */
 
   /* Check and update the number of touches active detected */
-  TS_State->touchDetected = tsDriver->DetectTouch(I2cAddress);
+  TS_State->touchDetected = tsDriver->DetectTouch(TS_I2cAddress);
   
   if(TS_State->touchDetected)
   {
     for(index=0; index < TS_State->touchDetected; index++)
     {
       /* Get each touch coordinates */
-      tsDriver->GetXY(I2cAddress, &(brute_x[index]), &(brute_y[index]));
+      tsDriver->GetXY(TS_I2cAddress, &(brute_x[index]), &(brute_y[index]));
 
       if(tsOrientation == TS_SWAP_NONE)
       {
@@ -275,7 +275,7 @@ uint8_t BSP_TS_GetState(TS_StateTypeDef *TS_State)
         _y[index] = y[index];
       }
 
-      if(I2cAddress == FT5336_I2C_SLAVE_ADDRESS)
+      if(TS_I2cAddress == FT5336_I2C_SLAVE_ADDRESS)
       {
         TS_State->touchX[index] = x[index];
         TS_State->touchY[index] = y[index];
@@ -290,7 +290,7 @@ uint8_t BSP_TS_GetState(TS_StateTypeDef *TS_State)
 #if (TS_MULTI_TOUCH_SUPPORTED == 1)
 
       /* Get touch info related to the current touch */
-      ft5336_TS_GetTouchInfo(I2cAddress, index, &weight, &area, &event);
+      ft5336_TS_GetTouchInfo(TS_I2cAddress, index, &weight, &area, &event);
 
       /* Update TS_State structure */
       TS_State->touchWeight[index] = weight;
@@ -342,7 +342,7 @@ uint8_t BSP_TS_Get_GestureId(TS_StateTypeDef *TS_State)
   uint8_t  ts_status = TS_OK;
 
   /* Get gesture Id */
-  ft5336_TS_GetGestureID(I2cAddress, &gestureId);
+  ft5336_TS_GetGestureID(TS_I2cAddress, &gestureId);
 
   /* Remap gesture Id to a TS_GestureIdTypeDef value */
   switch(gestureId)
@@ -383,7 +383,7 @@ uint8_t BSP_TS_Get_GestureId(TS_StateTypeDef *TS_State)
 void BSP_TS_ITClear(void)
 {
   /* Clear TS IT pending bits */
-  tsDriver->ClearIT(I2cAddress); 
+  tsDriver->ClearIT(TS_I2cAddress); 
 }
 
 
