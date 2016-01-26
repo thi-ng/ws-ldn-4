@@ -2,7 +2,7 @@
 
 #include "ex04/main.h"
 
-#define VOLUME 50
+#define VOLUME 70
 
 #define AUDIO_DMA_BUFFER_SIZE 1024
 #define AUDIO_DMA_BUFFER_SIZE2 (AUDIO_DMA_BUFFER_SIZE >> 1)
