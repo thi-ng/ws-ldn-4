@@ -113,7 +113,7 @@ static void drawElementLabel(GUIElement *e) {
 	}
 }
 
-static uint8_t colorModeStrides[] = { 4, 3, 2 };
+static uint8_t colorModeStrides[] = { 4, 3, 2, 2, 2 };
 
 void drawSprite(uint16_t x, uint16_t y, uint8_t id, SpriteSheet *sprite) {
 	uint32_t lcdWidth = BSP_LCD_GetXSize();
