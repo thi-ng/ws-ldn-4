@@ -1,5 +1,7 @@
 #+TITLE: thi.ng/ws-ldn-4
 
+[[./assets/ws-ldn-4-synth.jpg]]
+
 * Contents                                                         :toc_3_gh:
  - [[#diy-synth--gui-workshop-with-stm32f7-arm-cortex-m7][DIY Synth & GUI workshop with STM32F7 (ARM Cortex-M7)]]
      - [[#overview][Overview]]
