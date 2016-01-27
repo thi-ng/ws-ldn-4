@@ -16,7 +16,9 @@ extern uint8_t TS_I2cAddress;
 static void initTimer(uint16_t period);
 
 int main(void) {
+	CPU_CACHE_Enable();
 	HAL_Init();
+	HAL_NVIC_SetPriority(SysTick_IRQn, 0 ,0);
 	HAL_MPU_Disable();
 	BSP_LED_Init(LED_GREEN);
 	SystemClock_Config();

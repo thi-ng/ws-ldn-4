@@ -30,19 +30,18 @@ static CT_BiquadType filterTypes[] = { LPF, HPF, BPF, PEQ };
 
 static const uint8_t scale[] = { 36, 40, 43, 45, 55, 52, 48, 60, 52, 55, 45, 48,
 		36, 43, 31, 33 };
+
 uint32_t noteID = 0;
 uint32_t voiceID = 0;
 uint32_t lastNote = 0;
 
-static uint8_t volume = VOLUME;
-static float osc1Gain = 0.0f;
-static float osc2Gain = 0.25f;
-static uint8_t osc1Fn = 0;
-static uint8_t osc2Fn = 0;
-static float filterCutoff = 8000.0f;
-static float filterQ = 0.9f;
-static uint8_t filterType = 0;
-static float feedback = 0.5f;
+static SynthPreset synthPresets[] = { { .osc1Gain = 0, .osc2Gain = 0.25f, .detune = 0.51f,
+		.filterCutoff = 8000.0f, .filterQ = 0.9f, .feedback = 0.5f, .width =
+				1.0f, .osc1Fn = 0, .osc2Fn = 0, .filterType = 0, .tempo = 150,
+		.attack = 0.01f, .decay = 0.05f, .sustain = 0.5f, .release = 0.2f,
+		.volume = VOLUME } };
+
+static SynthPreset *preset = &synthPresets[0];
 
 static uint8_t audioBuf[AUDIO_DMA_BUFFER_SIZE];
 
@@ -66,10 +65,17 @@ static void gui_cb_setOsc1Gain(GUIElement *e);
 static void gui_cb_setOsc2Gain(GUIElement *e);
 static void gui_cb_setOsc1Fn(GUIElement *e);
 static void gui_cb_setOsc2Fn(GUIElement *e);
+static void gui_cb_setDetune(GUIElement *e);
 static void gui_cb_setFilterCutOff(GUIElement *e);
 static void gui_cb_setFilterQ(GUIElement *e);
 static void gui_cb_setFilterType(GUIElement *e);
 static void gui_cb_setFeedback(GUIElement *e);
+static void gui_cb_setTempo(GUIElement *e);
+static void gui_cb_setWidth(GUIElement *e);
+static void gui_cb_setAttack(GUIElement *e);
+static void gui_cb_setDecay(GUIElement *e);
+static void gui_cb_setSustain(GUIElement *e);
+static void gui_cb_setRelease(GUIElement *e);
 
 void demoAudioPlayback(void) {
 	BSP_LCD_Clear(UI_BG_COLOR);
@@ -81,7 +87,7 @@ void demoAudioPlayback(void) {
 		Error_Handler();
 	}
 	BSP_AUDIO_OUT_SetAudioFrameSlot(CODEC_AUDIOFRAME_SLOT_02);
-	BSP_AUDIO_OUT_SetVolume(volume);
+	BSP_AUDIO_OUT_SetVolume(preset->volume);
 	BSP_AUDIO_OUT_Play((uint16_t *) audioBuf, AUDIO_DMA_BUFFER_SIZE);
 
 	while (1) {
@@ -95,18 +101,20 @@ void demoAudioPlayback(void) {
 }
 
 static void initAppGUI() {
-	gui = initGUI(14, &UI_FONT, UI_BG_COLOR, UI_TEXT_COLOR);
-	gui->items[0] = guiDialButton(0, "MASTER", 15, 10, (float) volume / 80.0f,
-	UI_SENSITIVITY, &dialSheet, gui_cb_setVolume);
-	gui->items[1] = guiDialButton(1, "OSC1", 95, 10, (float) osc1Gain / 0.25f,
+	gui = initGUI(21, &UI_FONT, UI_BG_COLOR, UI_TEXT_COLOR);
+	gui->items[0] = guiDialButton(0, "MASTER", 15, 10,
+			(float) (preset->volume) / 80.0f,
+			UI_SENSITIVITY, &dialSheet, gui_cb_setVolume);
+	gui->items[1] = guiDialButton(1, "OSC1", 95, 10, preset->osc1Gain / 0.25f,
 	UI_SENSITIVITY, &dialSheet, gui_cb_setOsc1Gain);
-	gui->items[2] = guiDialButton(2, "OSC2", 175, 10, (float) osc2Gain / 0.25f,
+	gui->items[2] = guiDialButton(2, "OSC2", 175, 10, preset->osc2Gain / 0.25f,
 	UI_SENSITIVITY, &dialSheet, gui_cb_setOsc2Gain);
-	gui->items[3] = guiDialButton(3, "FREQ", 255, 10, filterCutoff / 8000.0f,
-	UI_SENSITIVITY, &dialSheet, gui_cb_setFilterCutOff);
-	gui->items[4] = guiDialButton(4, "RES", 335, 10, 0.9f - filterQ,
+	gui->items[3] = guiDialButton(3, "FREQ", 255, 10,
+			preset->filterCutoff / 8000.0f,
+			UI_SENSITIVITY, &dialSheet, gui_cb_setFilterCutOff);
+	gui->items[4] = guiDialButton(4, "RES", 335, 10, 0.9f - preset->filterQ,
 	UI_SENSITIVITY, &dialSheet, gui_cb_setFilterQ);
-	gui->items[5] = guiDialButton(5, "DELAY", 415, 10, feedback / 0.9f,
+	gui->items[5] = guiDialButton(5, "DELAY", 415, 10, preset->feedback / 0.9f,
 	UI_SENSITIVITY, &dialSheet, gui_cb_setFeedback);
 	// OSC1 types
 	gui->items[6] = guiPushButton(6, NULL, 95, 90, 1.0f, &soloSheet,
@@ -123,70 +131,126 @@ static void initAppGUI() {
 	gui->items[11] = guiPushButton(11, NULL, 175, 150, 4.0f, &soloSheet,
 			gui_cb_setOsc2Fn);
 	// Filter types
-	gui->items[12] = guiPushButton(6, NULL, 255, 90, 1.0f, &soloSheet,
+	gui->items[12] = guiPushButton(12, NULL, 255, 90, 1.0f, &soloSheet,
 			gui_cb_setFilterType);
-	gui->items[13] = guiPushButton(7, NULL, 255, 120, 2.0f, &soloSheet,
+	gui->items[13] = guiPushButton(13, NULL, 255, 120, 2.0f, &soloSheet,
 			gui_cb_setFilterType);
+	// Tempo
+	gui->items[14] = guiDialButton(14, "TEMPO", 15, 90,
+			1.0f - preset->tempo / 900.0f,
+			UI_SENSITIVITY, &dialSheet, gui_cb_setTempo);
+	// Panning width
+	gui->items[15] = guiDialButton(15, "WIDTH", 415, 90, preset->width,
+	UI_SENSITIVITY, &dialSheet, gui_cb_setWidth);
+	// Envelope
+	gui->items[16] = guiDialButton(16, "ATTACK", 95, 180, preset->attack,
+	UI_SENSITIVITY, &dialSheet, gui_cb_setAttack);
+	gui->items[17] = guiDialButton(17, "DECAY", 175, 180, preset->decay,
+	UI_SENSITIVITY, &dialSheet, gui_cb_setDecay);
+	gui->items[18] = guiDialButton(18, "SUSTAIN", 255, 180, preset->sustain,
+	UI_SENSITIVITY, &dialSheet, gui_cb_setSustain);
+	gui->items[19] = guiDialButton(19, "RELEASE", 335, 180, preset->release,
+	UI_SENSITIVITY, &dialSheet, gui_cb_setRelease);
+	// OSC2 detune
+	gui->items[20] = guiDialButton(20, "DETUNE", 335, 90, preset->detune - 0.5f,
+		UI_SENSITIVITY, &dialSheet, gui_cb_setDetune);
 	guiForceRedraw(gui);
 }
 
 static void gui_cb_setVolume(GUIElement *e) {
 	DialButtonState *db = (DialButtonState *) (e->userData);
-	BSP_AUDIO_OUT_SetVolume((uint8_t) (db->value * 80.0f));
+	preset->volume = (uint8_t) (db->value * 80.0f);
+	BSP_AUDIO_OUT_SetVolume(preset->volume);
+}
+
+static void gui_cb_setTempo(GUIElement *e) {
+	DialButtonState *db = (DialButtonState *) (e->userData);
+	preset->tempo = 150 + (uint16_t) ((1.0f - db->value) * 5.0f) * 150;
 }
 
 static void gui_cb_setOsc1Gain(GUIElement *e) {
 	DialButtonState *db = (DialButtonState *) (e->userData);
-	osc1Gain = expf(4.5f * db->value - 3.5f) / 2.7f * 0.25f;
+	preset->osc1Gain = expf(4.5f * db->value - 3.5f) / 2.7f * 0.25f;
 }
 
 static void gui_cb_setOsc2Gain(GUIElement *e) {
 	DialButtonState *db = (DialButtonState *) (e->userData);
-	osc2Gain = expf(4.5f * db->value - 3.5f) / 2.7f * 0.25f;
+	preset->osc2Gain = expf(4.5f * db->value - 3.5f) / 2.7f * 0.25f;
+}
+
+static void gui_cb_setDetune(GUIElement *e) {
+	DialButtonState *db = (DialButtonState *) (e->userData);
+	preset->detune = 0.5f + db->value * 0.02f;
 }
 
 static void gui_cb_setOsc1Fn(GUIElement *e) {
 	uint8_t id = (uint8_t) ((PushButtonState *) (e->userData))->value;
 	if (e->state & GUI_ON) {
-		osc1Fn |= id;
+		preset->osc1Fn |= id;
 	} else {
-		osc1Fn &= ~id;
+		preset->osc1Fn &= ~id;
 	}
-	osc1Fn = MIN(osc1Fn, 5);
+	preset->osc1Fn = MIN(preset->osc1Fn, 5);
 }
 
 static void gui_cb_setOsc2Fn(GUIElement *e) {
 	uint8_t id = (uint8_t) ((PushButtonState *) (e->userData))->value;
 	if (e->state & GUI_ON) {
-		osc2Fn |= id;
+		preset->osc2Fn |= id;
 	} else {
-		osc2Fn &= ~id;
+		preset->osc2Fn &= ~id;
 	}
-	osc2Fn = MIN(osc2Fn, 5);
+	preset->osc2Fn = MIN(preset->osc2Fn, 5);
 }
 
 static void gui_cb_setFilterCutOff(GUIElement *e) {
 	DialButtonState *db = (DialButtonState *) (e->userData);
-	filterCutoff = 220.0f + expf(4.5f * db->value - 3.5f) / 2.7f * 8000.0f;
+	preset->filterCutoff = 220.0f
+			+ expf(4.5f * db->value - 3.5f) / 2.7f * 8000.0f;
 }
 
 static void gui_cb_setFilterQ(GUIElement *e) {
 	DialButtonState *db = (DialButtonState *) (e->userData);
-	filterQ = 1.0f - db->value * 0.9f;
+	preset->filterQ = 1.0f - db->value * 0.9f;
 }
 
 static void gui_cb_setFilterType(GUIElement *e) {
 	uint8_t id = (uint8_t) ((PushButtonState *) (e->userData))->value;
 	if (e->state & GUI_ON) {
-		filterType |= id;
+		preset->filterType |= id;
 	} else {
-		filterType &= ~id;
+		preset->filterType &= ~id;
 	}
 }
 
 static void gui_cb_setFeedback(GUIElement *e) {
 	DialButtonState *db = (DialButtonState *) (e->userData);
-	feedback = db->value * 0.9f;
+	preset->feedback = db->value * 0.95f;
+}
+
+static void gui_cb_setWidth(GUIElement *e) {
+	DialButtonState *db = (DialButtonState *) (e->userData);
+	preset->width = db->value;
+}
+
+static void gui_cb_setAttack(GUIElement *e) {
+	DialButtonState *db = (DialButtonState *) (e->userData);
+	preset->attack = 0.001f + db->value * 0.999f;
+}
+
+static void gui_cb_setDecay(GUIElement *e) {
+	DialButtonState *db = (DialButtonState *) (e->userData);
+	preset->decay = 0.001f + db->value * 0.999f;
+}
+
+static void gui_cb_setSustain(GUIElement *e) {
+	DialButtonState *db = (DialButtonState *) (e->userData);
+	preset->sustain = db->value * 0.999f;
+}
+
+static void gui_cb_setRelease(GUIElement *e) {
+	DialButtonState *db = (DialButtonState *) (e->userData);
+	preset->release = 0.001f + db->value * 0.999f;
 }
 
 static void drawGUI() {
@@ -198,18 +262,19 @@ static void drawGUI() {
 }
 
 static void initStack(CT_DSPStack *stack, float freq) {
-	CT_DSPNode *env = ct_synth_adsr("e", synth.lfo[0], 0.01f, 0.05f, 0.2f, 1.0f,
-			0.5f);
-	CT_DSPNode *osc1 = ct_synth_osc("a", oscFunctions[osc1Fn], 0.0f,
-			HZ_TO_RAD(freq), osc1Gain, 0.0f);
-	CT_DSPNode *osc2 = ct_synth_osc("b", oscFunctions[osc2Fn], 0.0f,
-			HZ_TO_RAD(freq * 1.01f), osc2Gain, 0.0f);
+	CT_DSPNode *env = ct_synth_adsr("e", synth.lfo[0], preset->attack,
+			preset->decay, preset->release, 1.0f, preset->sustain);
+	CT_DSPNode *osc1 = ct_synth_osc("a", oscFunctions[preset->osc1Fn], 0.0f,
+			HZ_TO_RAD(freq), preset->osc1Gain, 0.0f);
+	CT_DSPNode *osc2 = ct_synth_osc("b", oscFunctions[preset->osc2Fn], 0.0f,
+			HZ_TO_RAD(freq * preset->detune), preset->osc2Gain, 0.0f);
 	CT_DSPNode *sum = ct_synth_op4("s", osc1, env, osc2, env,
 			ct_synth_process_madd);
-	CT_DSPNode *filter = ct_synth_filter_biquad("f", filterTypes[filterType],
-			sum, filterCutoff, 12.0f, filterQ);
+	CT_DSPNode *filter = ct_synth_filter_biquad("f",
+			filterTypes[preset->filterType], sum, preset->filterCutoff, 12.0f,
+			preset->filterQ);
 	CT_DSPNode *delay = ct_synth_delay("d", filter,
-			(int) (SAMPLE_RATE * 0.375f), feedback, 1);
+			(int) (SAMPLE_RATE * 0.375f), preset->feedback, 1);
 	CT_DSPNode *pan = ct_synth_panning("p", delay, NULL, 0.5f);
 	CT_DSPNode *nodes[] = { env, osc1, osc2, sum, filter, delay, pan };
 	ct_synth_init_stack(stack);
@@ -217,7 +282,7 @@ static void initStack(CT_DSPStack *stack, float freq) {
 }
 
 static void initSynth() {
-	ct_synth_init(&synth, 2);
+	ct_synth_init(&synth, 4);
 	synth.lfo[0] = ct_synth_osc("lfo1", ct_synth_process_osc_sin, 0.0f,
 			HZ_TO_RAD(1 / 24.0f), 0.6f, 1.0f);
 	synth.numLFO = 1;
@@ -228,25 +293,31 @@ static void initSynth() {
 }
 
 void updateOscillator(int16_t *ptr, uint32_t frames) {
-	if (HAL_GetTick() - lastNote >= 150) {
+	if (HAL_GetTick() - lastNote >= preset->tempo) {
 		lastNote = HAL_GetTick();
 		CT_DSPStack *s = &synth.stacks[voiceID];
-		ct_synth_reset_adsr(NODE_ID(s, "e"));
-		CT_OscState *osc1 = NODE_ID_STATE(CT_OscState, s, "a");
-		CT_OscState *osc2 = NODE_ID_STATE(CT_OscState, s, "b");
+		CT_DSPNode *env = NODE_ID(s, "e");
+		CT_DSPNode *a = NODE_ID(s, "a");
+		CT_DSPNode *b = NODE_ID(s, "b");
+		CT_OscState *osc1 = (CT_OscState *)a->state;
+		CT_OscState *osc2 = (CT_OscState *)b->state;
+		ct_synth_configure_adsr(env, preset->attack, preset->decay,
+				preset->release, 1.0f, preset->sustain);
+		ct_synth_reset_adsr(env);
 		osc1->freq = HZ_TO_RAD(ct_synth_notes[scale[noteID]]);
-		osc2->freq = HZ_TO_RAD(ct_synth_notes[scale[noteID]] * 0.51f);
+		osc2->freq = HZ_TO_RAD(ct_synth_notes[scale[noteID]] * preset->detune);
 		osc1->phase = 0;
 		osc2->phase = 0;
-		osc1->gain = osc1Gain;
-		osc2->gain = osc2Gain;
-		NODE_ID(s, "a")->handler = oscFunctions[osc1Fn];
-		NODE_ID(s, "b")->handler = oscFunctions[osc2Fn];
+		osc1->gain = preset->osc1Gain;
+		osc2->gain = preset->osc2Gain;
+		a->handler = oscFunctions[preset->osc1Fn];
+		b->handler = oscFunctions[preset->osc2Fn];
 		ct_synth_calculate_biquad_coeff(NODE_ID(s, "f"),
-				filterTypes[filterType], filterCutoff, 12.0f, filterQ);
-		NODE_ID_STATE(CT_DelayState, s, "d")->feedback = feedback;
-		NODE_ID_STATE(CT_PanningState, s, "p")->pos =
-				(voiceID % 2) ? 0.1f : 0.9f;
+				filterTypes[preset->filterType], preset->filterCutoff, 12.0f,
+				preset->filterQ);
+		NODE_ID_STATE(CT_DelayState, s, "d")->feedback = preset->feedback;
+		NODE_ID_STATE(CT_PanningState, s, "p")->pos = 0.5f
+				+ 0.49f * ((voiceID % 2) ? -preset->width : preset->width);
 		ct_synth_activate_stack(s);
 		noteID = (noteID + 1) % 16;
 		voiceID = (voiceID + 1) % synth.numStacks;
