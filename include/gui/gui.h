@@ -1,7 +1,9 @@
 #pragma once
 
-#define UI_BG_COLOR   ((uint32_t)0xff000000)
-#define UI_TEXT_COLOR ((uint32_t)0xffffffff)
+//#define UI_BG_COLOR   ((uint32_t)0xff000000)
+//#define UI_TEXT_COLOR ((uint32_t)0xff999999)
+#define UI_BG_COLOR   ((uint32_t)0xff59626c)
+#define UI_TEXT_COLOR ((uint32_t)0xffcccccc)
 #define UI_FONT Font12
 #define UI_SENSITIVITY 0.02f
 
@@ -35,6 +37,7 @@ typedef struct {
 	uint16_t spriteWidth;
 	uint16_t spriteHeight;
 	uint8_t numSprites;
+	uint32_t format;
 } SpriteSheet;
 
 struct GUIElement {
@@ -78,7 +81,7 @@ void renderDialButton(GUIElement *bt);
 
 void drawSprite(uint16_t x, uint16_t y, uint8_t id, SpriteSheet *sprite);
 void drawBitmapRaw(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
-		uint8_t *pixels);
+		uint8_t *pixels, uint32_t colorMode);
 
 GUI *initGUI(uint8_t num);
 void guiForceRedraw(GUI *gui);

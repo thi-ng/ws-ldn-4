@@ -53,7 +53,7 @@ void renderPushButton(GUIElement *bt) {
 	if (bt->state & GUI_DIRTY) {
 		SpriteSheet *sprite = bt->sprite;
 		uint8_t state = bt->state & GUI_ONOFF_MASK;
-		uint8_t id = state == GUI_ON ? 0 : 1;
+		uint8_t id = state == GUI_ON ? 1 : 0;
 		drawSprite(bt->x, bt->y, id, sprite);
 		drawElementLabel(bt);
 		// clear dirty flag
@@ -115,6 +115,8 @@ static void drawElementLabel(GUIElement *e) {
 	}
 }
 
+static uint8_t colorModeStrides[] = { 4, 3, 2 };
+
 void drawSprite(uint16_t x, uint16_t y, uint8_t id, SpriteSheet *sprite) {
 	uint32_t lcdWidth = BSP_LCD_GetXSize();
 	uint32_t address = hLtdcHandler.LayerCfg[LTDC_ACTIVE_LAYER].FBStartAdress
@@ -122,29 +124,29 @@ void drawSprite(uint16_t x, uint16_t y, uint8_t id, SpriteSheet *sprite) {
 	uint16_t width = sprite->spriteWidth;
 	uint16_t height = sprite->spriteHeight;
 	uint8_t *pixels = (uint8_t *) sprite->pixels;
-	pixels += (id * width * height) << 2;
-	uint16_t stride = width << 2;
+	uint32_t stride = colorModeStrides[sprite->format];
+	pixels += (id * width * height) * stride;
+	stride *= width;
 	lcdWidth <<= 2;
 	while (--height) {
-		LL_ConvertLineToARGB8888((uint32_t *) pixels, (uint32_t *) address,
+		LL_ConvertLineToARGB8888(pixels, (uint32_t *) address,
 				width,
-				CM_ARGB8888);
+				sprite->format);
 		address += lcdWidth;
 		pixels += stride;
 	}
 }
 
 void drawBitmapRaw(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
-		uint8_t *pixels) {
+		uint8_t *pixels, uint32_t colorMode) {
 	uint32_t lcdWidth = BSP_LCD_GetXSize();
 	uint32_t address = hLtdcHandler.LayerCfg[LTDC_ACTIVE_LAYER].FBStartAdress
 			+ (((lcdWidth * y) + x) << 2);
-	uint16_t stride = width << 2;
+	uint16_t stride = width * colorModeStrides[colorMode];
 	lcdWidth <<= 2;
 	while (--height) {
-		LL_ConvertLineToARGB8888((uint32_t *) pixels, (uint32_t *) address,
-				width,
-				CM_ARGB8888);
+		LL_ConvertLineToARGB8888(pixels, (uint32_t *) address,
+				width, colorMode);
 		address += lcdWidth;
 		pixels += stride;
 	}
