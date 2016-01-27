@@ -95,7 +95,7 @@ void demoAudioPlayback(void) {
 }
 
 static void initAppGUI() {
-	gui = initGUI(14);
+	gui = initGUI(14, &UI_FONT, UI_BG_COLOR, UI_TEXT_COLOR);
 	gui->items[0] = guiDialButton(0, "MASTER", 15, 10, (float) volume / 80.0f,
 	UI_SENSITIVITY, &dialSheet, gui_cb_setVolume);
 	gui->items[1] = guiDialButton(1, "OSC1", 95, 10, (float) osc1Gain / 0.25f,

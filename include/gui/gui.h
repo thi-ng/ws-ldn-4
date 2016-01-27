@@ -1,7 +1,7 @@
 #pragma once
 
-//#define UI_BG_COLOR   ((uint32_t)0xff000000)
-//#define UI_TEXT_COLOR ((uint32_t)0xff999999)
+#include "stm32746g_discovery_lcd.h"
+
 #define UI_BG_COLOR   ((uint32_t)0xff59626c)
 #define UI_TEXT_COLOR ((uint32_t)0xffcccccc)
 #define UI_FONT Font12
@@ -69,6 +69,9 @@ typedef struct {
 
 typedef struct {
 	GUIElement **items;
+	uint32_t bgColor;
+	uint32_t textColor;
+	sFONT *font;
 	uint8_t numItems;
 	int8_t selected;
 } GUI;
@@ -83,7 +86,7 @@ void drawSprite(uint16_t x, uint16_t y, uint8_t id, SpriteSheet *sprite);
 void drawBitmapRaw(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
 		uint8_t *pixels, uint32_t colorMode);
 
-GUI *initGUI(uint8_t num);
+GUI *initGUI(uint8_t num, sFONT *font, uint32_t bgCol, uint32_t textCol);
 void guiForceRedraw(GUI *gui);
 void guiUpdate(GUI *gui, GUITouchState *touch);
 void guiUpdateTouch(TS_StateTypeDef *raw, GUITouchState *touch);

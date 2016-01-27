@@ -26,13 +26,14 @@ static GUITouchState touchState;
 __IO uint32_t isPressed = 0;
 
 //static SpriteSheet dialSheet = { .pixels = bt_blackangle48_12,
-//		.spriteWidth = 48, .spriteHeight = 48, .numSprites = 12 };
+//		.spriteWidth = 48, .spriteHeight = 48, .numSprites = 12, .format = CM_ARGB8888 };
 
 static SpriteSheet dialSheet = { .pixels = bt_blackangle64_16,
-		.spriteWidth = 64, .spriteHeight = 64, .numSprites = 16 };
+		.spriteWidth = 64, .spriteHeight = 64, .numSprites = 16, .format =
+				CM_ARGB8888 };
 
 static SpriteSheet soloSheet = { .pixels = bt_solo32, .spriteWidth = 32,
-		.spriteHeight = 32, .numSprites = 2 };
+		.spriteHeight = 32, .numSprites = 2, .format = CM_ARGB8888 };
 
 static GUI *gui;
 
@@ -72,22 +73,19 @@ int main() {
 }
 
 static void initAppGUI() {
-	gui = initGUI(4);
+	gui = initGUI(4, &UI_FONT, LCD_COLOR_BLACK, LCD_COLOR_LIGHTGRAY);
 	gui->items[0] = guiDialButton(0, "Volume", 10, 10, 0.0f, 0.025f, &dialSheet,
 	NULL);
 	gui->items[1] = guiDialButton(1, "Freq", 80, 10, 0.0f, 0.025f, &dialSheet,
 	NULL);
-	gui->items[2] = guiDialButton(2, "Filter", 150, 10, 0.0f, 0.025f, &dialSheet,
-	NULL);
+	gui->items[2] = guiDialButton(2, "Filter", 150, 10, 0.0f, 0.025f,
+			&dialSheet,
+			NULL);
 	gui->items[3] = guiPushButton(3, "Test", 10, 100, 1.0f, &soloSheet, NULL);
 }
 
 static void demoGUI() {
-	BSP_LCD_SetFont(&UI_FONT);
-	BSP_LCD_SetBackColor(0);
-	BSP_LCD_Clear(UI_BG_COLOR);
-	BSP_LCD_SetTextColor(UI_TEXT_COLOR);
-
+	BSP_LCD_Clear(gui->bgColor);
 	guiForceRedraw(gui);
 
 	while (!isPressed) {

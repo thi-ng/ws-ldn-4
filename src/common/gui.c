@@ -108,8 +108,6 @@ void renderDialButton(GUIElement *bt) {
 static void drawElementLabel(GUIElement *e) {
 	if (e->label != NULL) {
 		SpriteSheet *sprite = e->sprite;
-		BSP_LCD_SetBackColor(UI_BG_COLOR);
-		BSP_LCD_SetTextColor(UI_TEXT_COLOR);
 		BSP_LCD_DisplayStringAt(e->x, e->y + sprite->spriteHeight + 4,
 				(uint8_t*) e->label, LEFT_MODE);
 	}
@@ -129,8 +127,7 @@ void drawSprite(uint16_t x, uint16_t y, uint8_t id, SpriteSheet *sprite) {
 	stride *= width;
 	lcdWidth <<= 2;
 	while (--height) {
-		LL_ConvertLineToARGB8888(pixels, (uint32_t *) address,
-				width,
+		LL_ConvertLineToARGB8888(pixels, (uint32_t *) address, width,
 				sprite->format);
 		address += lcdWidth;
 		pixels += stride;
@@ -145,8 +142,8 @@ void drawBitmapRaw(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
 	uint16_t stride = width * colorModeStrides[colorMode];
 	lcdWidth <<= 2;
 	while (--height) {
-		LL_ConvertLineToARGB8888(pixels, (uint32_t *) address,
-				width, colorMode);
+		LL_ConvertLineToARGB8888(pixels, (uint32_t *) address, width,
+				colorMode);
 		address += lcdWidth;
 		pixels += stride;
 	}
@@ -194,10 +191,13 @@ GUIElement *guiPushButton(uint8_t id, char *label, uint16_t x, uint16_t y,
 	return e;
 }
 
-GUI *initGUI(uint8_t num) {
+GUI *initGUI(uint8_t num, sFONT *font, uint32_t bgCol, uint32_t textCol) {
 	GUI *gui = (GUI *) calloc(1, sizeof(GUI));
 	gui->items = (GUIElement **) calloc(num, sizeof(GUIElement *));
 	gui->numItems = num;
+	gui->font = font;
+	gui->bgColor = bgCol;
+	gui->textColor = textCol;
 	return gui;
 }
 
@@ -208,6 +208,9 @@ void guiForceRedraw(GUI *gui) {
 }
 
 void guiUpdate(GUI *gui, GUITouchState *touch) {
+	BSP_LCD_SetFont(gui->font);
+	BSP_LCD_SetBackColor(gui->bgColor);
+	BSP_LCD_SetTextColor(gui->textColor);
 	for (uint8_t i = 0; i < gui->numItems; i++) {
 		GUIElement *e = gui->items[i];
 		e->handler(e, touch);
