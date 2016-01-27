@@ -32,8 +32,8 @@ void ct_synth_reset_pluck(CT_DSPNode *node, float freq, float impTime,
 
 uint8_t ct_synth_process_pluck(CT_DSPNode *node, CT_DSPStack *stack,
                                CT_Synth *synth, uint32_t offset) {
-	CT_UNUSED(synth);
-	CT_UNUSED(stack);
+    CT_UNUSED(synth);
+    CT_UNUSED(stack);
     CT_PluckOsc *state = (CT_PluckOsc *)node->state;
     float *acc = state->acc;
     float *buf = node->buf + offset;

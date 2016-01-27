@@ -16,8 +16,8 @@ CT_DSPNode *ct_synth_panning(char *id, CT_DSPNode *src, CT_DSPNode *lfo,
 
 uint8_t ct_synth_process_panning(CT_DSPNode *node, CT_DSPStack *stack,
                                  CT_Synth *synth, uint32_t offset) {
-	CT_UNUSED(synth);
-	CT_UNUSED(stack);
+    CT_UNUSED(synth);
+    CT_UNUSED(stack);
     CT_PanningState *state = (CT_PanningState *)(node->state);
     const float *src = state->src;
     const float pos = state->pos + *(state->lfo);

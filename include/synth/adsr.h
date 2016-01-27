@@ -26,4 +26,6 @@ CT_DSPNode *ct_synth_adsr(char *id, CT_DSPNode *lfo, float attTime,
                           float sustainGain);
 uint8_t ct_synth_process_adsr(CT_DSPNode *node, CT_DSPStack *stack,
                               CT_Synth *synth, uint32_t offset);
+void ct_synth_configure_adsr(CT_DSPNode *node, float attTime, float decayTime,
+		float releaseTime, float attGain, float sustainGain);
 void ct_synth_reset_adsr(CT_DSPNode *node);

@@ -31,8 +31,8 @@ void ct_synth_calculate_iir_coeff(CT_DSPNode *node, float cutoff, float reso) {
 
 uint8_t ct_synth_process_iir(CT_DSPNode *node, CT_DSPStack *stack,
                              CT_Synth *synth, uint32_t offset) {
-	CT_UNUSED(synth);
-	CT_UNUSED(stack);
+    CT_UNUSED(synth);
+    CT_UNUSED(stack);
     CT_IIRState *state = (CT_IIRState *)node->state;
     const float *src = state->src + offset;
     const float *lfo = state->lfo + offset;

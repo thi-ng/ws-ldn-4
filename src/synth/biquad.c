@@ -102,8 +102,8 @@ void ct_synth_calculate_biquad_coeff(CT_DSPNode *node, CT_BiquadType type,
 
 uint8_t ct_synth_process_biquad(CT_DSPNode *node, CT_DSPStack *stack,
                                 CT_Synth *synth, uint32_t offset) {
-	CT_UNUSED(synth);
-	CT_UNUSED(stack);
+    CT_UNUSED(synth);
+    CT_UNUSED(stack);
     CT_BiquadState *state = (CT_BiquadState *)node->state;
     const float *src = state->src + offset;
     float *buf = node->buf + offset;

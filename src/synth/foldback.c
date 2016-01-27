@@ -16,8 +16,8 @@ CT_DSPNode *ct_synth_foldback(char *id, CT_DSPNode *src, float threshold,
 
 uint8_t ct_synth_process_foldback(CT_DSPNode *node, CT_DSPStack *stack,
                                   CT_Synth *synth, uint32_t offset) {
-	CT_UNUSED(synth);
-	CT_UNUSED(stack);
+    CT_UNUSED(synth);
+    CT_UNUSED(stack);
     CT_FoldbackState *state = (CT_FoldbackState *)(node->state);
     const float *src = state->src;
     const float thresh = state->threshold;
