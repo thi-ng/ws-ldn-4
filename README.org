@@ -7,7 +7,11 @@
      - [[#overview][Overview]]
      - [[#status][Status]]
      - [[#examples--exercises][Examples / exercises]]
-     - [[#building-this-project][Building this project]]
+         - [[#ex01---hello-blinky][ex01 - Hello Blinky]]
+         - [[#ex02---timers--interrupts][ex02 - Timers & interrupts]]
+         - [[#ex03---lcd-multitouch--gui][ex03 - LCD, multitouch & GUI]]
+         - [[#ex04---synth-dsp--gui][ex04 - Synth, DSP & GUI]]
+     - [[#building-the-exercises][Building the exercises]]
      - [[#other-tools][Other tools]]
      - [[#license][License]]
 
@@ -21,9 +25,42 @@ TODO
 
 ** Examples / exercises
 
-** Building this project
+*** ex01 - Hello Blinky
+
+*** ex02 - Timers & interrupts
+
+*** ex03 - LCD, multitouch & GUI
+
+*** ex04 - Synth, DSP & GUI
+
+**** Oscillator types
+
+ Oscillator types are set via the following 3-bit patterns:
+
+ | *Spiral* | *Sin* | *Square* | *Saw* | *Sawsin* | *Tri* |
+ |----------+-------+----------+-------+----------+-------|
+ | [ ]      | [x]   | [ ]      | [x]   | [ ]      | [x]   |
+ | [ ]      | [ ]   | [x]      | [x]   | [ ]      | [ ]   |
+ | [ ]      | [ ]   | [ ]      | [ ]   | [x]      | [x]   |
+
+**** Filter types
+
+ Filter types are set via the following 2-bit patterns:
+
+ | *LPF* | *HPF* | *BPF* | *PEQ* |
+ |-------+-------+-------+-------|
+ | [ ]   | [x]   | [ ]   | [x]   |
+ | [ ]   | [ ]   | [x]   | [x]   |
+
+ This demo only makes use of biquad filters, though other filter types
+ are possible (IIR, Formant, 4pole...)
+
+** Building the exercises
 
 ** Other tools
+
+- [[http://www.g200kg.com/en/software/knobman.html][jKnobMan]]
+- PNG to C array conversion
 
 ** License
 
