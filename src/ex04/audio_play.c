@@ -152,6 +152,7 @@ static void gui_cb_setOsc1Fn(GUIElement *e) {
 	} else {
 		osc1Fn &= ~id;
 	}
+	osc1Fn = MIN(osc1Fn, 5);
 }
 
 static void gui_cb_setOsc2Fn(GUIElement *e) {
@@ -161,6 +162,7 @@ static void gui_cb_setOsc2Fn(GUIElement *e) {
 	} else {
 		osc2Fn &= ~id;
 	}
+	osc2Fn = MIN(osc2Fn, 5);
 }
 
 static void gui_cb_setFilterCutOff(GUIElement *e) {
