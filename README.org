@@ -1,0 +1,28 @@
+#+TITLE: thi.ng/ws-ldn-4
+
+* Contents                                                         :toc_3_gh:
+ - [[#diy-synth--gui-workshop-with-stm32f7-arm-cortex-m7][DIY Synth & GUI workshop with STM32F7 (ARM Cortex-M7)]]
+     - [[#overview][Overview]]
+     - [[#status][Status]]
+     - [[#examples--exercises][Examples / exercises]]
+     - [[#building-this-project][Building this project]]
+     - [[#other-tools][Other tools]]
+     - [[#license][License]]
+
+* DIY Synth & GUI workshop with STM32F7 (ARM Cortex-M7)
+
+** Overview
+
+TODO
+
+** Status
+
+** Examples / exercises
+
+** Building this project
+
+** Other tools
+
+** License
+
+This project is open source and licensed under the [[http://www.apache.org/licenses/LICENSE-2.0][Apache Software License 2.0]].
