@@ -15,6 +15,16 @@
 
 #define INV_RAND_MAX2 (float)(2.0 / RAND_MAX)
 
+#if defined(__ARM_ARCH)
+#include "tinymt32.h"
+
+tinymt32_t ct_math_rnd;
+
+void ct_math_init();
+float ct_randf(const float min, const float max);
+float ct_normrandf();
+
+#else
 inline float ct_randf(const float min, const float max) {
     return min + (float)rand() / RAND_MAX * (max - min);
 }
@@ -22,6 +32,7 @@ inline float ct_randf(const float min, const float max) {
 inline float ct_normrandf() {
     return (float)rand() * INV_RAND_MAX2 - 1.0f;
 }
+#endif
 
 inline float ct_stepf(const float x, const float edge, const float y1,
                       const float y2) {
