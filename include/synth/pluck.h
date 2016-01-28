@@ -2,7 +2,7 @@
 
 #include "synth.h"
 
-#define PLUCK_ACC_LEN 0x600
+#define PLUCK_ACC_LEN 0x200
 #define PLUCK_ACC_FREQ_LIMIT ((float)SAMPLE_RATE / (float)PLUCK_ACC_LEN)
 
 typedef struct {

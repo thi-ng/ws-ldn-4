@@ -54,12 +54,15 @@ typedef void *CT_DSPState;
 
 typedef enum { STACK_ACTIVE = 1 } CT_DSPStackFlag;
 
+typedef enum { NODE_ACTIVE = 1 } CT_DSPNodeFlag;
+
 struct CT_DSPNode {
     float *buf;
     CT_DSPNodeHandler handler;
     CT_DSPState state;
     CT_DSPNode *next;
     char *id;
+    uint8_t flags;
 };
 
 struct CT_DSPStack {

@@ -43,7 +43,7 @@ uint8_t ct_synth_process_osc_sin(CT_DSPNode *node, CT_DSPStack *stack,
     CT_OscState *state = (CT_OscState *)node->state;
     const float freq = state->freq;
     const float *lfo = state->lfo + offset;
-    const float *env = state->env + offset;
+    //const float *env = state->env + offset;
     float phase = state->phase;
     float *buf = node->buf + offset;
     uint32_t len = AUDIO_BUFFER_SIZE - offset;
@@ -64,7 +64,7 @@ uint8_t ct_synth_process_osc_square(CT_DSPNode *node, CT_DSPStack *stack,
     CT_OscState *state = (CT_OscState *)node->state;
     const float freq = state->freq;
     const float *lfo = state->lfo + offset;
-    const float *env = state->env + offset;
+    //const float *env = state->env + offset;
     float phase = state->phase;
     float *buf = node->buf + offset;
     uint32_t len = AUDIO_BUFFER_SIZE - offset;
@@ -85,7 +85,7 @@ uint8_t ct_synth_process_osc_saw(CT_DSPNode *node, CT_DSPStack *stack,
     CT_OscState *state = (CT_OscState *)(node->state);
     const float freq = state->freq;
     const float *lfo = state->lfo + offset;
-    const float *env = state->env + offset;
+    //const float *env = state->env + offset;
     float phase = state->phase;
     float *buf = node->buf + offset;
     uint32_t len = AUDIO_BUFFER_SIZE - offset;
@@ -106,7 +106,7 @@ uint8_t ct_synth_process_osc_tri(CT_DSPNode *node, CT_DSPStack *stack,
     CT_OscState *state = (CT_OscState *)node->state;
     const float freq = state->freq;
     const float *lfo = state->lfo + offset;
-    const float *env = state->env + offset;
+    //const float *env = state->env + offset;
     float phase = state->phase;
     float *buf = node->buf + offset;
     uint32_t len = AUDIO_BUFFER_SIZE - offset;
@@ -133,7 +133,7 @@ uint8_t ct_synth_process_osc_sawsin(CT_DSPNode *node, CT_DSPStack *stack,
     CT_OscState *state = (CT_OscState *)node->state;
     const float freq = state->freq;
     const float *lfo = state->lfo + offset;
-    const float *env = state->env + offset;
+    //const float *env = state->env + offset;
     float phase = state->phase;
     float *buf = node->buf + offset;
     uint32_t len = AUDIO_BUFFER_SIZE - offset;
@@ -156,7 +156,7 @@ uint8_t ct_synth_process_osc_impulse(CT_DSPNode *node, CT_DSPStack *stack,
     CT_OscState *state = (CT_OscState *)node->state;
     const float freq = state->freq;
     const float *lfo = state->lfo + offset;
-    const float *env = state->env + offset;
+    //const float *env = state->env + offset;
     float phase = state->phase;
     float *buf = node->buf + offset;
     uint32_t len = AUDIO_BUFFER_SIZE - offset;

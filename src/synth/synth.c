@@ -110,6 +110,7 @@ void ct_synth_init_node(CT_DSPNode *node, char *id, uint8_t channels) {
     node->buf = calloc(AUDIO_BUFFER_SIZE * channels, sizeof(float));
     node->state = NULL;
     node->next = NULL;
+    node->flags = NODE_ACTIVE;
     node->id = (char *)calloc(strlen(id), sizeof(char));
     strcpy(node->id, id);
 }
@@ -147,10 +148,12 @@ void ct_synth_process_stack(CT_DSPStack *stack, CT_Synth *synth,
         CT_DSPNode *node = stack->startNode;
         uint8_t flags = 0;
         while (1) {
-            flags |= node->handler(node, stack, synth, offset);
-            if (node->next == NULL) {
-                break;
-            }
+        	if (node->flags & NODE_ACTIVE) {
+        		flags |= node->handler(node, stack, synth, offset);
+        		if (node->next == NULL) {
+        			break;
+        		}
+        	}
             node = node->next;
         }
         stack->flags &= (flags ^ 0xff);
