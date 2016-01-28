@@ -84,8 +84,8 @@ be located in ={$PROJECT_DIR}/ex04/ws-ldn-4.bin=.
 
 The STM32F746-DISCO board is mbed enabled and therefore can be
 programmed/flashed via simple drag & drop. Simply move a =.bin= file
-on to the USB volume the board shows up as in OSX Finder or Windows
-Explorer. Under Linux, please use the st-flash tool and invoke like this:
+onto the USB volume the board shows up as in OSX Finder or Windows
+Explorer. Under Linux, please use the [[https://github.com/texane/stlink][st-flash]] tool and invoke like this:
 
 #+BEGIN_SRC bash
 cd ws-ldn-4
