@@ -19,48 +19,83 @@
 
 ** Overview
 
-TODO
+[[https://www.youtube.com/watch?v=3lL-ZxyrHiE][Video documentation]]
 
 ** Status
+
+Stable
 
 ** Examples / exercises
 
 *** ex01 - Hello Blinky
 
+Simple LED blink example and GPIO (push button) handling, polling vs.
+EXTI interrupt
+
 *** ex02 - Timers & interrupts
+
+Introduction to timers, configuration and custom interrupt handlers.
+Useful for basic multi-tasking.
 
 *** ex03 - LCD, multitouch & GUI
 
+Introduction to LCD driver, HAL BSP drawing functionality, state
+machines, GUI components & multi-touch handling. Press blue user
+button to switch between modules.
+
 *** ex04 - Synth, DSP & GUI
+
+Complete synth, GUI controls & timer integration. See video above.
 
 **** Oscillator types
 
- Oscillator types are set via the following 3-bit patterns:
+Oscillator types are set via the following 3-bit patterns:
 
- | *Spiral* | *Sin* | *Square* | *Saw* | *Sawsin* | *Tri* |
- |----------+-------+----------+-------+----------+-------|
- | [ ]      | [x]   | [ ]      | [x]   | [ ]      | [x]   |
- | [ ]      | [ ]   | [x]      | [x]   | [ ]      | [ ]   |
- | [ ]      | [ ]   | [ ]      | [ ]   | [x]      | [x]   |
+| *Spiral* | *Sin* | *Square* | *Saw* | *Sawsin* | *Tri* | *String* |
+|----------+-------+----------+-------+----------+-------+----------|
+| [ ]      | [x]   | [ ]      | [x]   | [ ]      | [x]   | [ ]      |
+| [ ]      | [ ]   | [x]      | [x]   | [ ]      | [ ]   | [x]      |
+| [ ]      | [ ]   | [ ]      | [ ]   | [x]      | [x]   | [x]      |
 
 **** Filter types
 
- Filter types are set via the following 2-bit patterns:
+Filter types are set via the following 2-bit patterns:
 
- | *LPF* | *HPF* | *BPF* | *PEQ* |
- |-------+-------+-------+-------|
- | [ ]   | [x]   | [ ]   | [x]   |
- | [ ]   | [ ]   | [x]   | [x]   |
+| *LPF* | *HPF* | *BPF* | *PEQ* |
+|-------+-------+-------+-------|
+| [ ]   | [x]   | [ ]   | [x]   |
+| [ ]   | [ ]   | [x]   | [x]   |
 
- This demo only makes use of biquad filters, though other filter types
- are possible (IIR, Formant, 4pole...)
+This demo only makes use of biquad filters, though other filter types
+are possible (IIR, Formant, 4pole...)
 
 ** Building the exercises
+
+This repo contains a complete Eclipse CDT project and can be built
+with [[http://gnuarmeclipse.github.io][GNU ARM Eclipse]] plugin. Furthermore, the [[https://launchpad.net/gcc-arm-embedded][ARM GCC toolchain]] is
+required outside Eclipse.
+
+Within the project, you can find several build configurations, one per
+example/exercise. Build profiles can be switched by clicking on the
+little triangle next to the hammer (build) icon in the main toolbar.
+Once a profile has been built, you'll find the resulting =.bin= file
+in the profile's subfolder of this project. E.g. =ex04='s binary will
+be located in ={$PROJECT_DIR}/ex04/ws-ldn-4.bin=.
+
+The STM32F746-DISCO board is mbed enabled and therefore can be
+programmed/flashed via simple drag & drop. Simply move a =.bin= file
+on to the USB volume the board shows up as in OSX Finder or Windows
+Explorer. Under Linux, please use the st-flash tool and invoke like this:
+
+#+BEGIN_SRC bash
+cd ws-ldn-4
+st-flash --reset write ex04/ws-ldn-4.bin 0x8000000
+#+END_SRC
 
 ** Other tools
 
 - [[http://www.g200kg.com/en/software/knobman.html][jKnobMan]]
-- PNG to C array conversion
+- [[./tools/RawImage/RawImage.pde][PNG to C array conversion]] (Processing sketch in =/tools= folder)
 
 ** License
 
