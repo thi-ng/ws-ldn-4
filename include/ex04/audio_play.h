@@ -25,6 +25,7 @@ typedef struct {
 	float decay;
 	float sustain;
 	float release;
+	float string;
 	uint16_t tempo;
 	uint8_t osc1Fn;
 	uint8_t osc2Fn;
