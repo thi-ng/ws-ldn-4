@@ -82,10 +82,17 @@ Once a profile has been built, you'll find the resulting =.bin= file
 in the profile's subfolder of this project. E.g. =ex04='s binary will
 be located in ={$PROJECT_DIR}/ex04/ws-ldn-4.bin=.
 
-The STM32F746-DISCO board is mbed enabled and therefore can be
-programmed/flashed via simple drag & drop. Simply move a =.bin= file
-onto the USB volume the board shows up as in OSX Finder or Windows
-Explorer. Under Linux, please use the [[https://github.com/texane/stlink][st-flash]] tool and invoke like this:
+*Important:* The build profile called "base" is only a template and is
+NOT buildable. However it is the default profile after importing the
+project into Eclipse. So if it starts building the project
+automatically and you get lots of errors, let it finish and then
+select one of the example profiles ("ex01"...) as described above.
+
+The STM32F746-DISCO board is mbed enabled and
+therefore can be programmed/flashed via simple drag & drop. Simply
+move a =.bin= file onto the USB volume the board shows up as in OSX
+Finder or Windows Explorer. Under Linux, please use the [[https://github.com/texane/stlink][st-flash]] tool
+and invoke like this:
 
 #+BEGIN_SRC bash
 cd ws-ldn-4
