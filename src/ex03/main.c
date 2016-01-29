@@ -25,14 +25,14 @@ static GUITouchState touchState;
 
 __IO uint32_t isPressed = 0;
 
-//static SpriteSheet dialSheet = { .pixels = bt_blackangle48_12,
+//static SpriteSheet dialSheet = { .pixels = bt_blackangle48_12_argb8888,
 //		.spriteWidth = 48, .spriteHeight = 48, .numSprites = 12, .format = CM_ARGB8888 };
 
-static SpriteSheet dialSheet = { .pixels = bt_blackangle64_16,
+static SpriteSheet dialSheet = { .pixels = bt_blackangle64_16_argb8888,
 		.spriteWidth = 64, .spriteHeight = 64, .numSprites = 16, .format =
 				CM_ARGB8888 };
 
-static SpriteSheet soloSheet = { .pixels = bt_solo32, .spriteWidth = 32,
+static SpriteSheet soloSheet = { .pixels = bt_solo32_argb8888, .spriteWidth = 32,
 		.spriteHeight = 32, .numSprites = 2, .format = CM_ARGB8888 };
 
 static GUI *gui;

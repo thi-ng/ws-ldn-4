@@ -48,10 +48,10 @@ static SynthPreset *preset = &synthPresets[0];
 
 static uint8_t audioBuf[AUDIO_DMA_BUFFER_SIZE];
 
-static SpriteSheet dialSheet = { .pixels = bt_dustknob48_12_rgb, .spriteWidth =
+static SpriteSheet dialSheet = { .pixels = bt_dustknob48_12_rgb888, .spriteWidth =
 		48, .spriteHeight = 48, .numSprites = 12, .format = CM_RGB888 };
 
-static SpriteSheet soloSheet = { .pixels = bt_dustled48_2_rgb,
+static SpriteSheet soloSheet = { .pixels = bt_dustled48_2_rgb888,
 		.spriteWidth = 48, .spriteHeight = 24, .numSprites = 2, .format =
 		CM_RGB888 };
 
