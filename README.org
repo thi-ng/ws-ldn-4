@@ -4,22 +4,24 @@
 
 * Contents                                                         :toc_3_gh:
  - [[#diy-synth--gui-workshop-with-stm32f7-arm-cortex-m7][DIY Synth & GUI workshop with STM32F7 (ARM Cortex-M7)]]
-     - [[#overview][Overview]]
+     - [[#video-documentation][Video documentation]]
      - [[#status][Status]]
      - [[#examples--exercises][Examples / exercises]]
          - [[#ex01---hello-blinky][ex01 - Hello Blinky]]
          - [[#ex02---timers--interrupts][ex02 - Timers & interrupts]]
          - [[#ex03---lcd-multitouch--gui][ex03 - LCD, multitouch & GUI]]
          - [[#ex04---synth-dsp--gui][ex04 - Synth, DSP & GUI]]
+         - [[#ex05---midi-step-sequencer][ex05 - MIDI step sequencer]]
      - [[#building-the-exercises][Building the exercises]]
      - [[#other-tools][Other tools]]
      - [[#license][License]]
 
 * DIY Synth & GUI workshop with STM32F7 (ARM Cortex-M7)
 
-** Overview
+** Video documentation
 
-[[https://www.youtube.com/watch?v=3lL-ZxyrHiE][Video documentation]]
+- [[https://www.youtube.com/watch?v=41FKE3PYjnE][MIDI step sequencer]] (ex05)
+- [[https://www.youtube.com/watch?v=3lL-ZxyrHiE][Synth GUI documentation]] (ex04)
 
 ** Status
 
@@ -68,6 +70,44 @@ Filter types are set via the following 2-bit patterns:
 
 This demo only makes use of biquad filters, though other filter types
 are possible (IIR, Formant, 4pole...)
+
+*** ex05 - MIDI step sequencer
+
+MIDI example ported from [[http://thi.ng/ws-ldn-3][previous workshop]] (then using STM32F401),
+implementing a 2-track, 8-step MIDI sequencer using buttons of the
+Korg Nanokontrol2. The MIDI configuration (in =ex05/main.h=) is still
+set for the Nanokontrol and I've also uploaded a configuration file
+(nanokontrol2.nktrl2_data) which you can use with the Korg Kontrol
+Editor app (can be downloaded from here:
+http://www.korg.com/uk/products/controllers/nanokontrol2/ - further
+down on that page).
+
+The Nanokontrol is configured as follows:
+
+- the first row of buttons ("S") is used as 8 step sequencer for track 1
+- the second row of buttons ("M") => track 2
+- 2 leftmost sliders control filter cutoff freq for sequencer tracks 1 & 2
+- 2 leftmost dials controls resonance for each filter
+- 3rd dial => delay feedback
+- 4th & 5th dial => attack time for track 1 & 2
+- Marker left/right => change waveform for oscillator 1 (all tracks)
+- Track left/right => transpose current sequence by -12, -5, 0, +7 or
++12 semi-tones
+- Rewind, Stop & Play do as expected (when the app starts, it is in
+Pause mode - you'll need to press Play and activate at least one "S"
+or "M" button)
+
+The notes played in each sequencer track are randomly chosen from a
+musical scale defined in the source code. If you don't like a note,
+simply de-activate and then press the "S" or "M" button again to get
+another semi-random note. See the live video recording (link above)
+for reference...
+
+If you have a different MIDI controller, you'll have to edit the MIDI
+control message IDs in the =ex05/main.h= file for this example. Note,
+that your controller *MUST* be able to emit MIDI CC messages. With a
+bit more work this can of course also be extended to proper MIDI Note
+On/Off messages...
 
 ** Building the exercises
 
