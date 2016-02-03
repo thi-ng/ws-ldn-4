@@ -14,13 +14,6 @@ void SysTick_Handler(void) {
 	HAL_IncTick();
 }
 
-/******************************************************************************/
-/*                 STM32F4xx Peripherals Interrupt Handlers                   */
-/*  Add here the Interrupt Handler for the used peripheral(s) (BSP), for the  */
-/*  available peripheral interrupt handler's name please refer to the startup */
-/*  file (startup_stm32f4xx.s).                                               */
-/******************************************************************************/
-
 void EXTI15_10_IRQHandler(void) {
 	if (__HAL_GPIO_EXTI_GET_IT(TS_INT_PIN) != RESET) {
 		HAL_GPIO_EXTI_IRQHandler(TS_INT_PIN);

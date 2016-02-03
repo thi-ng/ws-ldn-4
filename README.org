@@ -142,7 +142,7 @@ st-flash --reset write ex04/ws-ldn-4.bin 0x8000000
 ** Other tools
 
 - [[http://www.g200kg.com/en/software/knobman.html][jKnobMan]]
-- [[./tools/RawImage/RawImage.pde][PNG to C array conversion]] (Processing sketch in =/tools= folder)
+- [[https://github.com/thi-ng/img2array][Image to C array conversion]]
 
 ** License
 

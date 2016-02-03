@@ -98,8 +98,8 @@ void demoAudioPlayback(void) {
 	BSP_AUDIO_OUT_Play((uint16_t *) audioBuf, AUDIO_DMA_BUFFER_SIZE);
 
 	while (1) {
-		//updateAudioBuffer();
 		drawGUI();
+		HAL_Delay(16);
 	}
 
 	if (BSP_AUDIO_OUT_Stop(CODEC_PDWN_HW) != AUDIO_OK) {
@@ -393,12 +393,10 @@ void renderAudio(int16_t *ptr, uint32_t frames) {
 static void updateAudioBuffer() {
 	if (bufferState == BUFFER_OFFSET_HALF) {
 		int16_t *ptr = (int16_t*) &audioBuf[0];
-		//ct_synth_update_mix_stereo_i16(&synth, AUDIO_DMA_BUFFER_SIZE2, ptr);
 		renderAudio(ptr, AUDIO_DMA_BUFFER_SIZE8);
 		bufferState = BUFFER_OFFSET_NONE;
 	} else if (bufferState == BUFFER_OFFSET_FULL) {
 		int16_t *ptr = (int16_t*) &audioBuf[0] + AUDIO_DMA_BUFFER_SIZE4;
-		//ct_synth_update_mix_stereo_i16(&synth, AUDIO_DMA_BUFFER_SIZE2, ptr);
 		renderAudio(ptr, AUDIO_DMA_BUFFER_SIZE8);
 		bufferState = BUFFER_OFFSET_NONE;
 	}
